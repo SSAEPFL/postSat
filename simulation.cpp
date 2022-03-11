@@ -5,7 +5,7 @@
 #include <valarray>       // valarray functions
 #include "ConfigFile.h" // Il contient les methodes pour lire inputs et ecrire outputs
                           // Fichier .tpp car inclut fonctions template
-#include "Ephemeris.hpp"
+#include "ephemeris/Ephemeris.hpp"
 
 using namespace std; // ouvrir un namespace avec la librairie c++ de base
 
@@ -450,7 +450,7 @@ dt = dt_;
 // programme
 int main(int argc, char* argv[])
 {
-  string inputPath("configuration.in"); // Fichier d'input par defaut
+  string inputPath("configuration.dat"); // Fichier d'input par defaut
   if(argc>1) // Fichier d'input specifie par l'utilisateur ("./Exercice2 config_perso.in")
     inputPath = argv[1];
 

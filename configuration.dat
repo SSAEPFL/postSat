@@ -1,6 +1,11 @@
 % Parametres physiques :
 tfin   = 9.400964925358290e6     % temps total maximal de simulation [s]
-int day=4, month=3,year=2022,hour=14,minute=14,second=0;
+day=4
+month=3
+year=2022
+hour=14
+minute=14
+second=0
 mass2   = 1.989e30  % masse du corps 1[kg] Soleil
 mass1   = 685.e0  % mass du corps 2[kg] Satellite
 mass3   = 1.e-41  % mass du corps 3[kg] Autre Astre (LUNE)

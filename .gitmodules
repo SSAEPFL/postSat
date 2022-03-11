@@ -1,0 +1,3 @@
+[submodule "ephemeris"]
+	path = ephemeris
+	url = https://github.com/MarScaper/ephemeris.git
