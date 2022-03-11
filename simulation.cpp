@@ -75,8 +75,7 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-      *outputFile << t  << x0[0] << " "<< x0[1] << " " << x0[2] << " " \
-       <<dt << endl; // write output on file
+      *outputFile << t  << " "<<x1[6] << " "<< x1[7] << " " << x1[8] << endl; // write output on file
       last = 1;
     }
     else
@@ -120,6 +119,7 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
   force[0] = force[0] * (x_[0]-x1_[0]);
   force[1] = force[1] * (x_[1]-x1_[1]);
   force[2] = force[2] * (x_[2]-x1_[2]);
+
   return force;
 }
 valarray<double> ForceGravitationLune(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -155,6 +155,7 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceGravitationSoleil(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]+ForceSolaire(x_,x1_)[0];
   accelere[1] = ForceGravitationSoleil(x_,x1_)[1]+ForceGravitationTerre(x_,x1_)[1]+ForceGravitationSoleil(x_,x1_)[1]+ForceFrottement(x_,x1_)[1]+ForceSolaire(x_,x1_)[1];
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationSoleil(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]+ForceSolaire(x_,x1_)[2];
+
   return accelere;
 }
   // donnes internes
@@ -221,7 +222,9 @@ public:
   {
     t = 0.e0; // initialiser le temps
     x = x0;   // initialiser la position
+
     Soleil = Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second); // initialisation du soleil
+    Ephemeris::setLocationOnEarth(48,50,11, -2,20,14);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation de la Lune
     // Initialisation des positions
     x1[6]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position initiale Terre
@@ -234,7 +237,7 @@ public:
     x1[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1[7];	 // lire composante y position initiale Corps 3
     x1[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1[8];		 // lire composante z position initiale Corps 3
     last = 0; // initialise le parametre d'ecriture
-    printOut(true); // ecrire premier pas de temps
+    printOut(false); // ne pas ecrire premier pas de temps
   if (tol == 0){
     while(t < tfin -dt ) // boucle sur tout pas de temps
     {

@@ -8,10 +8,10 @@ CXXFLAGS += -O2
 simulation: simulation.o Ephemeris.o ephemeris/ELP2000.hpp Calendar.o
 	$(CXX) $(CXXFLAGS) $^
 
-simulation.o: simulation.cpp Ephemeris.o ephemeris/ELP2000.hpp Calendar.o 
+simulation.o: simulation.cpp Ephemeris.o ephemeris/ELP2000.hpp Calendar.o
 		$(CXX) $(CXXFLAGS) -c simulation.cpp -o $@
 
-test: test.o Ephemeris.o ELP2000.hpp Calendar.o
+test: test.o Ephemeris.o ephemeris/ELP2000.hpp Calendar.o
 	$(CXX) $(CXXFLAGS) $^
 
 test.o: test.cc Ephemeris.o ephemeris/ELP2000.hpp Calendar.o
