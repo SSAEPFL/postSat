@@ -75,7 +75,7 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-      *outputFile << t  << " "<<x[0] << " "<< x[1] << " " << x[2] << endl; // write output on file
+      *outputFile << t  << " "<<x[0] << " "<< x[1] << " " << x[2] << " " <<  dt<<endl; // write output on file
       last = 1;
     }
     else
@@ -107,9 +107,10 @@ valarray<double> distance( int j, valarray<double> const& x_,valarray<double> co
   valarray<double> diff= valarray<double>(0.e0,3);
   j = 3*(j-1);
 
-  diff[0] = x_[0]-x_[j];
-  diff[1] = x_[1]-x_[j+1];
-  diff[2] = x_[2]-x_[j+2];
+  diff[0] = x_[0]-x1_[j];
+  diff[1] = x_[1]-x1_[j+1];
+  diff[2] = x_[2]-x1_[j+2];
+
   return diff;
 }
 valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -119,7 +120,7 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
   force[0] = force[0] * (x_[0]-x1_[0]);
   force[1] = force[1] * (x_[1]-x1_[1]);
   force[2] = force[2] * (x_[2]-x1_[2]);
-
+  cout <<  x_[0]<< " " << x_[1] << " " << x_[2]<< endl;
   return force;
 }
 valarray<double> ForceGravitationLune(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -194,7 +195,9 @@ public:
     x0[0]    = configFile.get<double>("x01");		 // lire composante x position initiale Satellite
     x0[1]    = configFile.get<double>("y01");		 // lire composante y position initiale Satellite
     x0[2]    = configFile.get<double>("z01");		 // lire composante z position initiale Satellite
-
+    x0[3]    = configFile.get<double>("vx01");		 // lire composante x position initiale Satellite
+    x0[4]    = configFile.get<double>("vy01");		 // lire composante y position initiale Satellite
+    x0[5]    = configFile.get<double>("vz01");		 // lire composante z position initiale Satellite
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
     year = configFile.get<double>("year"); // Lire l'heure de la détection
