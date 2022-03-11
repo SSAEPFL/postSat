@@ -75,7 +75,7 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-      *outputFile << t  << " "<<x1[6] << " "<< x1[7] << " " << x1[8] << endl; // write output on file
+      *outputFile << t  << " "<<x[0] << " "<< x[1] << " " << x[2] << endl; // write output on file
       last = 1;
     }
     else
