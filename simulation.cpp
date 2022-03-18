@@ -20,7 +20,41 @@ template<typename T> T norm2(valarray<T> const& array){
   // compute and return the norm2 of a valarray
   return sqrt((array*array).sum());
 }
+void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& second )
+{
+  while(second > 60){
+    second -= 60;
+    minute += 1;
+    while(minute > 60){
+      minute -= 60;
+      heure += 1;
+      while (heure > 24) {
+        heure -= 24;
+        day += 1;
+        if ((month == 1 or month ==3 or month == 5 or month ==7 or month ==8 or month == 10) && day > 31) {
 
+            day -=31;
+            month += 1;
+          }
+        else if ((month == 4 or month == 6 or month ==9 or month == 11) && day > 30) {
+
+            day -=30;
+            month += 1;
+
+        }
+        else if (month == 2 && day > 28) {
+            day -=28;
+            month += 1;
+        }
+        else if (month == 12 && day > 31){
+          day -= 31;
+          month -= 12;
+          year += 1;
+        }
+      }
+    }
+  }
+}
 
 template<typename T> valarray<T> vectorProduct(valarray<T> const& array1,\
 valarray<T> const& array2){
@@ -75,7 +109,7 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-      *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2] << " " <<x1[6] << " "<< x1[7] << " " << x1[8] << " " <<  dt<<endl; // write output on file
+      *outputFile << t  << " "<<x1[0]-x1[6]<< " "<< x1[1]-x1[7] << " " << x1[2]-x1[8] << " " <<x1[3]-x1[6] << " "<< x1[4]-x1[7] << " " << x1[5]-x1[8] << " " <<x1[6]-x1[6] << " "<< x1[7]-x1[7] << " " << x1[8]-x1[8] << " " <<  dt<<endl; // write output on file
       last = 1;
     }
     else
@@ -306,18 +340,7 @@ public:
     k4 *= dt_;
     x_ +=(1.0/6.0)*(k1+2*k2+2*k3+k4);
     second += dt_;
-    if(second > 60){
-      second -= 60;
-      minute += 1;
-      if(minute > 60){
-        minute -=60;
-        hour += 1;
-        if(hour > 24){
-          hour-=24;
-          day += 1;
-        }
-      }
-    }
+    chgmtemps(day,month,year,hour,minute,second);
     Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second);
     //Mise a jour des positions des astres
@@ -327,9 +350,9 @@ public:
     x1_[6]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Terre
     x1_[7]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Terre
     x1_[8]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Terre
-    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[9];		 // lire composante x position Lune
-    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[10];	 // lire composante y position Lune
-    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[11];		 // lire composante z position Lune
+    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[6];		 // lire composante x position Lune
+    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[7];	 // lire composante y position Lune
+    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[8];		 // lire composante z position Lune
 
   }
 
