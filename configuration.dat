@@ -5,17 +5,14 @@ month=3
 year=2022
 hour=14
 minute=14
-second=0
-mass2   = 1.989e30  % masse du corps 1[kg] Soleil
-mass1   = 685.e0  % mass du corps 2[kg] Satellite
-mass3   = 1.e-41  % mass du corps 3[kg] Autre Astre (LUNE)
-mass4   = 1.e-41  % mass du corps 4[kg] Autre Astre (Terre)
-mass5   = 1.e-41  % mass du corps 5[kg] Autre Astre (Autre) % Mettre à 1.e-41 pour ne pas la prendre en compte
-x01     = 1.e4        % position initiale en x [m] corps 1
-y01     = 1.e4        % position initiale en y [m] corps 1
-z01     = 1.e4        % position initiale en z [m] corps 1
+second=1
+mass1   = 4.2.e5  % mass du corps 2[kg] Satellite
+
+x01     = 420.e3        % position initiale en x [m] corps 1
+y01     = 0.e1        % position initiale en y [m] corps 1
+z01     = 0.e1        % position initiale en z [m] corps 1
 vx01    = 0.e0       % vitesse initiale en x [m/s] corps 1
-vy01    =  0.e0       % vitesse initiale en y [m/s] corps 1
+vy01    =  7661.e0       % vitesse initiale en y [m/s] corps 1
 vz01    =  0.e0       % vitesse initiale en z [m/s] corps 1
 % Parametres numeriques :
 nsteps   = 100000     % nombre de pas de temps maximal (dt=tfin/nsteps)

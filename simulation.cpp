@@ -75,7 +75,7 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-      *outputFile << t  << " "<<x[0] << " "<< x[1] << " " << x[2] << " " <<  dt<<endl; // write output on file
+      *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2] << " " <<x1[6] << " "<< x1[7] << " " << x1[8] << " " <<  dt<<endl; // write output on file
       last = 1;
     }
     else
@@ -87,7 +87,7 @@ protected:
   // Iteration temporelle, a definir au niveau des classes filles
   virtual void step(valarray<double>&,valarray<double>&, double)=0;
   virtual void step2(double&)=0;
-  valarray<double> mass =  valarray<double>(0.e0,5);  // masses des corps
+  double mass ;  // masses des corps
   SolarSystemObject Soleil;
   SolarSystemObject Lune ;
 int day,month,year,hour,minute,second;
@@ -102,7 +102,7 @@ valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
     return shifting;
   }
 
-valarray<double> distance( int j, valarray<double> const& x_,valarray<double> const& x1_) const { //  On donne les deux vecteurs de postions et l'indice de l'astre (1 : Soleil, 2: Lune, 3: Terre, 4: Autre)
+valarray<double> distance(int j, valarray<double> const& x_,valarray<double> const& x1_) const { //  On donne les deux vecteurs de postions et l'indice de l'astre (1 : Soleil, 2: Lune, 3: Terre, 4: Autre)
    // La distance est toujours par rapport au Satellite
   valarray<double> diff= valarray<double>(0.e0,3);
   j = 3*(j-1);
@@ -120,7 +120,6 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
   force[0] = force[0] * (x_[0]-x1_[0]);
   force[1] = force[1] * (x_[1]-x1_[1]);
   force[2] = force[2] * (x_[2]-x1_[2]);
-  cout <<  x_[0]<< " " << x_[1] << " " << x_[2]<< endl;
   return force;
 }
 valarray<double> ForceGravitationLune(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -187,11 +186,7 @@ public:
     // Stockage des parametres de simulation dans les attributs de la classe
     tfin     = configFile.get<double>("tfin");		 // lire la temps totale de simulation
     nsteps   = configFile.get<unsigned int>("nsteps");   // lire la nombre de pas de temps
-    mass[0]     = configFile.get<double>("mass1");		 // lire la mass du corps 1
-    mass[1]     = configFile.get<double>("mass2");		 // lire la mass du corps 2
-    mass[2]     = configFile.get<double>("mass3");		 // lire la mass du corps 3
-    mass[3]     = configFile.get<double>("mass4");		 // lire la mass du corps 4
-    mass[4]     = configFile.get<double>("mass5");		 // lire la mass du corps 5
+    mass     = configFile.get<double>("mass1");		 // lire la mass du corps 1
     x0[0]    = configFile.get<double>("x01");		 // lire composante x position initiale Satellite
     x0[1]    = configFile.get<double>("y01");		 // lire composante y position initiale Satellite
     x0[2]    = configFile.get<double>("z01");		 // lire composante z position initiale Satellite
@@ -207,6 +202,9 @@ public:
     sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
     tol = configFile.get<double>("tol");
     dt = tfin / nsteps;          // calculer le time step
+    /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
+    Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
+*/
 
     // Ouverture du fichier de sortie
     outputFile = new ofstream(configFile.get<string>("output").c_str());
@@ -225,10 +223,10 @@ public:
   {
     t = 0.e0; // initialiser le temps
     x = x0;   // initialiser la position
+    Ephemeris::setLocationOnEarth(46.61910958572537, 6.220300715342668);
+   Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
+  Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
 
-    Soleil = Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second); // initialisation du soleil
-    Ephemeris::setLocationOnEarth(48,50,11, -2,20,14);
-    Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation de la Lune
     // Initialisation des positions
     x1[6]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position initiale Terre
     x1[7]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position initiale Terre
@@ -240,7 +238,7 @@ public:
     x1[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1[7];	 // lire composante y position initiale Corps 3
     x1[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1[8];		 // lire composante z position initiale Corps 3
     last = 0; // initialise le parametre d'ecriture
-    printOut(false); // ne pas ecrire premier pas de temps
+    printOut(true); // ne pas ecrire premier pas de temps
   if (tol == 0){
     while(t < tfin -dt ) // boucle sur tout pas de temps
     {
@@ -294,10 +292,10 @@ public:
   */
   void step(valarray<double>& x_,valarray<double>& x1_, double dt_) override
   {
-    valarray<double> k1 =valarray<double>(3);
-    valarray<double> k2 =valarray<double>(3);
-    valarray<double> k3 =valarray<double>(3);
-    valarray<double> k4 =valarray<double>(3);
+    valarray<double> k1 =valarray<double>(6);
+    valarray<double> k2 =valarray<double>(6);
+    valarray<double> k3 =valarray<double>(6);
+    valarray<double> k4 =valarray<double>(6);
     k1 = fonction(x_,x1_);
     k1 *= dt_;
     k2 = fonction(x_+0.5*k1,x1_);
