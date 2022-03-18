@@ -1,3 +1,3 @@
 [submodule "ephemeris"]
 	path = ephemeris
-	url = https://github.com/MarScaper/ephemeris.git
+	url = https://github.com/SSAEPFL/ephemeris.git
