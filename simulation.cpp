@@ -70,9 +70,9 @@ valarray<T> const& array2){
 valarray<double> equatorialtocartesian(double ascension,\
 double declinaison, double distance){ // Transformation du système equatorial à Cartesien par rapport au point VERNAL
 valarray<double> array3 = valarray<double>(3);
-  array3[0] = distance*cos(pi/180*ascension)*cos(pi/180*declinaison); // premier composante
-  array3[1] = distance*sin(pi/180*ascension)*cos(pi/180*declinaison); // deuxieme composante
-  array3[2] = distance*sin(pi/180*declinaison); // troisieme composante
+  array3[0] = distance*cos(0.2618*ascension)*cos( 0.2618*declinaison); // premier composante
+  array3[1] = distance*sin( 0.2618*ascension)*cos( 0.2618*declinaison); // deuxieme composante
+  array3[2] = distance*sin( 0.2618*declinaison); // troisieme composante
 
   return array3;
 }
