@@ -22,13 +22,13 @@ template<typename T> T norm2(valarray<T> const& array){
 }
 void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& second )
 {
-  while(second > 60){
+  while(second >= 60){
     second -= 60;
     minute += 1;
-    while(minute > 60){
+    while(minute >= 60){
       minute -= 60;
       heure += 1;
-      while (heure > 24) {
+      while (heure >= 24) {
         heure -= 24;
         day += 1;
         if ((month == 1 or month ==3 or month == 5 or month ==7 or month ==8 or month == 10) && day > 31) {
@@ -48,7 +48,7 @@ void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& sec
         }
         else if (month == 12 && day > 31){
           day -= 31;
-          month -= 12;
+          month -= 11;
           year += 1;
         }
       }
@@ -110,6 +110,8 @@ private:
     if((!write && last>=sampling) || (write && last!=1))
     {
       *outputFile << t  << " "<<x1[0]-x1[6]<< " "<< x1[1]-x1[7] << " " << x1[2]-x1[8] << " " <<x1[3]-x1[6] << " "<< x1[4]-x1[7] << " " << x1[5]-x1[8] << " " <<x1[6]-x1[6] << " "<< x1[7]-x1[7] << " " << x1[8]-x1[8] << " " <<  dt<<endl; // write output on file
+    //  *outputFile << t  << " "<<hour<< " "<< minute << " " <<second << " " << day << " "<< month << " " << year <<endl; // write output on file
+
       last = 1;
     }
     else
@@ -248,6 +250,7 @@ public:
   // Destructeur virtuel
   virtual ~Engine()
   {
+    cout <<hour<< " "<< minute << " " <<second << " " << day << " "<< month << " " << year <<endl; // write output on file
     outputFile->close();
     delete outputFile;
 
@@ -510,5 +513,7 @@ int main(int argc, char* argv[])
 
   delete engine; // effacer la class simulation
   cout << "Fin de la simulation." << endl;
+
+
   return 0;
 }
