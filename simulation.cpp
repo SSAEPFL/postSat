@@ -341,7 +341,7 @@ public:
     k3 *= dt_;
     k4 = fonction(x_+k3,x1_);
     k4 *= dt_;
-    x_ +=(1.0/6.0)*(k1+2*k2+2*k3+k4);
+    x_ +=(1.0/6.0)*(k1+2.0*k2+2.0*k3+k4);
     second += dt_;
     chgmtemps(day,month,year,hour,minute,second);
     Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
