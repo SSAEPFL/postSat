@@ -21,7 +21,7 @@ template<typename T> T norm2(valarray<T> const& array){
   return sqrt((array*array).sum());
 }
 
-// Convertit le surplus de seconde (i.e. plus de 60 seconde) en minute, heure, jour, mois, année 
+// Convertit le surplus de seconde (i.e. plus de 60 seconde) en minute, heure, jour, mois, année
 void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& second )
 {
   while(second >= 60){
@@ -48,9 +48,10 @@ void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& sec
 	day -=28;
 	month += 1;
   }
-  else if (month == 2 && day > 28 && year % 4 = 0){
+  else if (month == 2 && day > 28 && year % 4 == 0){
 	day -=29;
 	month += 1;
+}
 	// Année bissextile
   else if (month == 12 && day > 31){
 	day -= 31;
@@ -58,10 +59,6 @@ void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& sec
 	year += 1;
   }
 }
-    
-  
-
-
 template<typename T> valarray<T> vectorProduct(valarray<T> const& array1,\
 valarray<T> const& array2){
   // initialiser le nouveau valarray
@@ -76,7 +73,7 @@ valarray<T> const& array2){
 valarray<double> equatorialtocartesian(double ascension,\
 double declinaison, double distance){ // Transformation du système equatorial à Cartesien par rapport au point VERNAL
 valarray<double> array3 = valarray<double>(3);
-double conv = 3.1415926535897932384626433832795028841971/24;
+double conv = 2*3.1415926535897932384626433832795028841971/24;
 double conv1 = M_PI/180;
   array3[0] = distance*cos(conv*ascension)*cos(conv1*declinaison); // premier composante
   array3[1] = distance*sin(conv*ascension)*cos(conv1*declinaison); // deuxieme composante
@@ -117,9 +114,9 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-      *outputFile << t  << " "<<x1[0]-x1[6]<< " "<< x1[1]-x1[7] << " " << x1[2]-x1[8] << " " <<x1[3]-x1[6] << " "<< x1[4]-x1[7] << " " << x1[5]-x1[8] << " " <<x1[6]-x1[6] << " "<< x1[7]-x1[7] << " " << x1[8]-x1[8] << " " <<  dt<<endl; // write output on file
+    *outputFile << t  << " "<<x1[0]<< " "<< x1[1] << " " << x1[2] << " " <<x1[3] << " "<< x1[4] << " " << x1[5] << " " <<x1[6] << " "<< x1[7] << " " << x1[8] << " " <<  dt<<endl; // write output on file
     //  *outputFile << t  << " "<<hour<< " "<< minute << " " <<second << " " << day << " "<< month << " " << year <<endl; // write output on file
-
+ //*outputFile << t  << " "<<Lune.equaCoordinates.ra<< " "<< Lune.equaCoordinates.dec <<endl;
       last = 1;
     }
     else
@@ -364,7 +361,6 @@ public:
     x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[6];		 // lire composante x position Lune
     x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[7];	 // lire composante y position Lune
     x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[8];		 // lire composante z position Lune
-
   }
 
   void step2(double& dt_) override // Methode utile pour le pas de temps adaptatif
