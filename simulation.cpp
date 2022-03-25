@@ -75,12 +75,11 @@ valarray<T> const& array2){
 valarray<double> equatorialtocartesian(double ascension,\
 double declinaison, double distance){ // Transformation du système equatorial à Cartesien par rapport au point VERNAL
 valarray<double> array3 = valarray<double>(3);
-double hr2rad = 2*3.1415926535897932384626433832795028841971/24;
-double deg2rad = 3.1415926535897932384626433832795028841971/180;
+double hr2rad = 2*3.1415926535897932384626433832795028841971/24; // Conversion d'angle en heure -> radians
+double deg2rad = 3.1415926535897932384626433832795028841971/180; // Conversion d'angle en degré -> radians
   array3[0] = distance*cos(hr2rad*ascension)*cos(deg2rad*declinaison); // premier composante
   array3[1] = distance*sin(hr2rad*ascension)*cos(deg2rad*declinaison); // deuxieme composante
   array3[2] = distance*sin(deg2rad*declinaison); // troisieme composante
-//TO DO : CHECKER LA CONVERSION
   return array3;
 }
 
