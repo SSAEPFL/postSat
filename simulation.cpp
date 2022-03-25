@@ -48,11 +48,11 @@ void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& sec
 	day -=28;
 	month += 1;
   }
+  // Année bissextile
   else if (month == 2 && day > 28 && year % 4 == 0){
 	day -=29;
 	month += 1;
-}
-	// Année bissextile
+  }
   else if (month == 12 && day > 31){
 	day -= 31;
 	month -= 11;
@@ -64,21 +64,21 @@ valarray<T> const& array2){
   // initialiser le nouveau valarray
   valarray<T> array3=valarray<T>(3);
   // calculer le produit vecteur
-  array3[0] = array1[1]*array2[2] - array1[2]*array2[1]; // premier composante
+  array3[0] = array1[1]*array2[2] - array1[2]*array2[1]; // premiere composante
   array3[1] = array1[2]*array2[0] - array1[0]*array2[2]; // deuxieme composante
   array3[2] = array1[0]*array2[1] - array1[1]*array2[0]; // troisieme composante
   // retourner le array3
   return array3;
 }
+
 valarray<double> equatorialtocartesian(double ascension,\
 double declinaison, double distance){ // Transformation du système equatorial à Cartesien par rapport au point VERNAL
 valarray<double> array3 = valarray<double>(3);
-double conv = 2*3.1415926535897932384626433832795028841971/24;
-double conv1 = M_PI/180;
-  array3[0] = distance*cos(conv*ascension)*cos(conv1*declinaison); // premier composante
-  array3[1] = distance*sin(conv*ascension)*cos(conv1*declinaison); // deuxieme composante
-  array3[2] = distance*sin(conv1*declinaison); // troisieme composante
-//TO DO : CHECKER LA CONVERSION
+double hr2rad = 2*3.1415926535897932384626433832795028841971/24; // Conversion d'angle en heure -> radians
+double deg2rad = 3.1415926535897932384626433832795028841971/180; // Conversion d'angle en degré -> radians
+  array3[0] = distance*cos(hr2rad*ascension)*cos(deg2rad*declinaison); // premier composante
+  array3[1] = distance*sin(hr2rad*ascension)*cos(deg2rad*declinaison); // deuxieme composante
+  array3[2] = distance*sin(deg2rad*declinaison); // troisieme composante
   return array3;
 }
 
