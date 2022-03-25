@@ -176,9 +176,9 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
 
 valarray<double> force= valarray<double>(0.e0,3);
 force = G*masse_terre/(norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_)));
-force[0] = force[0] * (x_[0]-x1_[6]);
-force[1] = force[1] * (x_[1]-x1_[7]);
-force[2] = force[2] * (x_[2]-x1_[8]);
+force[0] = force[0] * (x1_[6] - x_[0]);
+force[1] = force[1] * (x1_[7] - x_[1]);
+force[2] = force[2] * (x1_[8] - x_[2]);
     cout << norm2(distance(3,x_,x1_))  << " " <<G*masse_terre/(norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))) << " " <<x1_[6] << " " <<  endl;
 return force;
 }
@@ -194,9 +194,9 @@ return force;
 }
 valarray<double> acceleration(valarray<double> const& x_,valarray<double> const& x1_) const{
   valarray<double> accelere(0.e1,3);
-  accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceGravitationSoleil(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]+ForceSolaire(x_,x1_)[0];
-  accelere[1] = ForceGravitationSoleil(x_,x1_)[1]+ForceGravitationTerre(x_,x1_)[1]+ForceGravitationSoleil(x_,x1_)[1]+ForceFrottement(x_,x1_)[1]+ForceSolaire(x_,x1_)[1];
-  accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationSoleil(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]+ForceSolaire(x_,x1_)[2];
+  accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]+ForceSolaire(x_,x1_)[0];
+  accelere[1] = ForceGravitationSoleil(x_,x1_)[1]+ForceGravitationTerre(x_,x1_)[1]+ForceFrottement(x_,x1_)[1]+ForceSolaire(x_,x1_)[1];
+  accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]+ForceSolaire(x_,x1_)[2];
 
   return accelere;
 }
@@ -232,9 +232,9 @@ public:
     x0[0]    = configFile.get<double>("x01");		 // lire composante x position initiale Satellite
     x0[1]    = configFile.get<double>("y01");		 // lire composante y position initiale Satellite
     x0[2]    = configFile.get<double>("z01");		 // lire composante z position initiale Satellite
-    x0[3]    = configFile.get<double>("vx01");		 // lire composante x position initiale Satellite
-    x0[4]    = configFile.get<double>("vy01");		 // lire composante y position initiale Satellite
-    x0[5]    = configFile.get<double>("vz01");		 // lire composante z position initiale Satellite
+    x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
+    x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
+    x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
     year = configFile.get<double>("year"); // Lire l'heure de la détection
