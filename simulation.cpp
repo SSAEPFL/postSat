@@ -20,41 +20,47 @@ template<typename T> T norm2(valarray<T> const& array){
   // compute and return the norm2 of a valarray
   return sqrt((array*array).sum());
 }
+
+// Convertit le surplus de seconde (i.e. plus de 60 seconde) en minute, heure, jour, mois, année 
 void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& second )
 {
   while(second >= 60){
     second -= 60;
     minute += 1;
-    while(minute >= 60){
-      minute -= 60;
-      heure += 1;
-      while (heure >= 24) {
-        heure -= 24;
-        day += 1;
-        if ((month == 1 or month ==3 or month == 5 or month ==7 or month ==8 or month == 10) && day > 31) {
-
-            day -=31;
-            month += 1;
-          }
-        else if ((month == 4 or month == 6 or month ==9 or month == 11) && day > 30) {
-
-            day -=30;
-            month += 1;
-
-        }
-        else if (month == 2 && day > 28) {
-            day -=28;
-            month += 1;
-        }
-        else if (month == 12 && day > 31){
-          day -= 31;
-          month -= 11;
-          year += 1;
-        }
-      }
-    }
+  }
+  while(minute >= 60){
+	minute -= 60;
+	heure += 1;
+  }
+  while (heure >= 24) {
+    heure -= 24;
+    day += 1;
+  }
+  if ((month == 1 or month ==3 or month == 5 or month ==7 or month ==8 or month == 10) && day > 31) {
+    day -=31;
+    month += 1;
+  }
+  else if ((month == 4 or month == 6 or month ==9 or month == 11) && day > 30) {
+	day -=30;
+	month += 1;
+  }
+  else if (month == 2 && day > 28 && year % 4 != 0) {
+	day -=28;
+	month += 1;
+  }
+  else if (month == 2 && day > 28 && year % 4 = 0){
+	day -=29;
+	month += 1;
+	// Année bissextile
+  else if (month == 12 && day > 31){
+	day -= 31;
+	month -= 11;
+	year += 1;
   }
 }
+    
+  
+
 
 template<typename T> valarray<T> vectorProduct(valarray<T> const& array1,\
 valarray<T> const& array2){
