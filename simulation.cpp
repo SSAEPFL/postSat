@@ -114,9 +114,7 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-    *outputFile << t  << " "<<x1[0]<< " "<< x1[1] << " " << x1[2] << " " <<x1[3] << " "<< x1[4] << " " << x1[5] << " " <<x1[6] << " "<< x1[7] << " " << x1[8] << " " <<  dt<<endl; // write output on file
-    //  *outputFile << t  << " "<<hour<< " "<< minute << " " <<second << " " << day << " "<< month << " " << year <<endl; // write output on file
- //*outputFile << t  << " "<<Lune.equaCoordinates.ra<< " "<< Lune.equaCoordinates.dec <<endl;
+    *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2]  << " "<<x1[6]<< " "<< x1[7] << " " << x[8] << " " <<dt<<endl; // write output on file
       last = 1;
     }
     else
@@ -143,33 +141,35 @@ valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
     return shifting;
   }
 
-valarray<double> distance(int j, valarray<double> const& x_,valarray<double> const& x1_) const { //  On donne les deux vecteurs de postions et l'indice de l'astre (1 : Soleil, 2: Lune, 3: Terre, 4: Autre)
+valarray<double> distance(int j, valarray<double> const& x_,valarray<double> x1_) const { //  On donne les deux vecteurs de postions et l'indice de l'astre (1 : Soleil, 2: Lune, 3: Terre, 4: Autre)
    // La distance est toujours par rapport au Satellite
   valarray<double> diff= valarray<double>(0.e0,3);
-  j = 3*(j-1);
+  valarray<double> astre= valarray<double>(0.e0,12);
+  astre = x1_;
+  int d = 3*(j-1);
 
-  diff[0] = x_[0]-x1_[j];
-  diff[1] = x_[1]-x1_[j+1];
-  diff[2] = x_[2]-x1_[j+2];
+  diff[0] = x_[0]-x1_[d];
+  diff[1] = x_[1]-x1_[d+1];
+  diff[2] = x_[2]-x1_[d+2];
 
   return diff;
 }
 valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<double> const& x1_) const {
   valarray<double> force= valarray<double>(0.e0,3);
 
-  force = G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
+/*  force = G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[0]);
   force[1] = force[1] * (x_[1]-x1_[1]);
-  force[2] = force[2] * (x_[2]-x1_[2]);
+  force[2] = force[2] * (x_[2]-x1_[2]);*/
   return force;
 }
 valarray<double> ForceGravitationLune(valarray<double> const& x_,valarray<double> const& x1_) const {
 
   valarray<double> force= valarray<double>(0.e0,3);
-  force = G*masse_lune/(norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_)));
+  /*force = G*masse_lune/(norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[3]);
   force[1] = force[1] * (x_[1]-x1_[4]);
-  force[2] = force[2] * (x_[2]-x1_[5]);
+  force[2] = force[2] * (x_[2]-x1_[5]);*/
   return force;
 }
 valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -179,6 +179,7 @@ force = G*masse_terre/(norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))*norm2
 force[0] = force[0] * (x_[0]-x1_[6]);
 force[1] = force[1] * (x_[1]-x1_[7]);
 force[2] = force[2] * (x_[2]-x1_[8]);
+    cout << norm2(distance(3,x_,x1_))  << " " <<G*masse_terre/(norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))) << " " <<x1_[6] << " " <<  endl;
 return force;
 }
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -264,11 +265,11 @@ public:
   void run()
   {
     t = 0.e0; // initialiser le temps
-    x = x0;   // initialiser la position
+
     Ephemeris::setLocationOnEarth(46.61910958572537, 6.220300715342668);
    Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
   Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
-
+  x = x0 + equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance); // Initialisation du satellite héliocentrique
     // Initialisation des positions
     x1[6]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position initiale Terre
     x1[7]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position initiale Terre
@@ -279,6 +280,7 @@ public:
     x1[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1[6];		 // lire composante x position initiale Corps 3
     x1[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1[7];	 // lire composante y position initiale Corps 3
     x1[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1[8];		 // lire composante z position initiale Corps 3
+    //  x = x0+equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance);   // initialiser la position
     last = 0; // initialise le parametre d'ecriture
     printOut(true); // ne pas ecrire premier pas de temps
   if (tol == 0){
@@ -334,7 +336,7 @@ public:
   */
   void step(valarray<double>& x_,valarray<double>& x1_, double dt_) override
   {
-    valarray<double> k1 =valarray<double>(6);
+    /*valarray<double> k1 =valarray<double>(6);
     valarray<double> k2 =valarray<double>(6);
     valarray<double> k3 =valarray<double>(6);
     valarray<double> k4 =valarray<double>(6);
@@ -361,6 +363,33 @@ public:
     x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[6];		 // lire composante x position Lune
     x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[7];	 // lire composante y position Lune
     x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[8];		 // lire composante z position Lune
+    */
+
+    // Tentative avec Euler
+    valarray<double> x_1 = x_[slice(0,3,1)];
+    valarray<double> v = x_[slice(3,6,1)];
+
+    v += acceleration(x_1,x1_)*dt_;
+    x_1 += v*dt_;
+    x_[slice(0,3,1)] += x_1;
+    x_[slice(0,3,1)] += v;
+    x_[slice(0,3,1)] -= equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance);
+
+    second += dt_;
+    chgmtemps(day,month,year,hour,minute,second);
+    Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
+    Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second);
+    //Mise a jour des positions des astres
+    x1_[0]    = 0.0;		 // lire composante x position Soleil
+    x1_[1]    = 0.0;		 // lire composante y position
+    x1_[2]    = 0.0;		 // lire composante z position
+    x1_[6]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Terre
+    x1_[7]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Terre
+    x1_[8]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Terre
+    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[6];		 // lire composante x position Lune
+    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[7];	 // lire composante y position Lune
+    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[8];		 // lire composante z position Lune
+    x_[slice(0,3,1)] += equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance);
   }
 
   void step2(double& dt_) override // Methode utile pour le pas de temps adaptatif
