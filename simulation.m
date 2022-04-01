@@ -1,6 +1,7 @@
-%
-% 
+%% Importation des données
  data = load('output.out');
+ 
+%% Plots
 % figure
 % title('Ascension ')
 % plot(data(:,1),data(:,2),'rx') % Soleil 1 ans
@@ -24,7 +25,7 @@ figure
 hold on
 
 plot3(data(:,2),data(:,3),data(:,4),'k-') % Satellite
-plot3(data(:,5)-data(:,5),data(:,6)-data(:,6),data(:,7)-data(:,7),'r--') % Terre
+plot3(data(:,5)-data(:,5),data(:,6)-data(:,6),data(:,7)-data(:,7),'rx') % Terre
 
 xlabel('x')
 ylabel('y')
