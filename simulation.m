@@ -20,10 +20,11 @@
 % zlabel('z')
 
 figure
-title('Lune 28 jours')
+
 hold on
 
-plot3(data(:,5),data(:,6),data(:,7),'rx') % Lune 
+plot3(data(:,2),data(:,3),data(:,4),'k-') % Satellite
+plot3(data(:,5)-data(:,5),data(:,6)-data(:,6),data(:,7)-data(:,7),'r--') % Terre
 
 xlabel('x')
 ylabel('y')
