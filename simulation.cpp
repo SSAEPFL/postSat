@@ -157,6 +157,7 @@ valarray<double> distance(int j, valarray<double> const& x_,valarray<double> x1_
 valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<double> const& x1_) const {
   valarray<double> force= valarray<double>(0.e0,3);
 
+
 /*  force = G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[0]);
   force[1] = force[1] * (x_[1]-x1_[1]);

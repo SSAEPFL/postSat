@@ -23,8 +23,8 @@ figure
 
 hold on
 
-plot3(data(:,2)-data(:,5),data(:,3)-data(:,6),data(:,4)-data(:,7),'k-') % Satellite
-plot3(data(:,5)-data(:,5),data(:,6)-data(:,6),data(:,7)-data(:,7),'rx') % Terre
+plot3(data(:,2),data(:,3),data(:,4),'k-') % Satellite
+plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
 
 xlabel('x')
 ylabel('y')
