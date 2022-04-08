@@ -97,7 +97,7 @@ private:
   const double masse_soleil =1.988435e30 ;
   const double masse_lune = 7.3459e22;
   const double masse_terre = 5.97e24;
-
+  const double celeritas =  299792458;
   // definition des variables
   double tfin=0.e0;      // Temps final
   unsigned int nsteps=1; // Nombre de pas de temps
@@ -131,6 +131,7 @@ protected:
   SolarSystemObject Lune ;
 int day,month,year,hour,minute,second;
 const double astronomical_unit= 1.496e11;
+double area; // Aire du satellite recevant la lumière du soleil
 valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
 
   template<typename T> valarray<T> heliocentricshift(valarray<double> position)
@@ -193,13 +194,21 @@ return force;
 valarray<double> ForceSolaire(valarray<double> const& x_,valarray<double> const& x1_) const {
 
 valarray<double> force= valarray<double>(0.e0,3);
+// Force de radiation :
+// Cst Solar formula : sigma T^4 (R_s/R)^2
+/*sigma = 5.670374e-8;T_s = 5778;R_s = 6.957e8;
+solarCst = sigma*pow(5778,4)*pow((R_s/norm2(x_),2));
+force = solarCst/celeritas * area ;
+force[0] = x_[0]/norm2(x_);
+force[1] = x_[1]/norm2(x_);
+force[2] = x_[2]/norm2(x_);*/
 return force;
 }
 valarray<double> acceleration(valarray<double> const& x_,valarray<double> const& x1_) const{
   valarray<double> accelere(0.e1,3);
-  accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceGravitationLune(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]+ForceSolaire(x_,x1_)[0];
-  accelere[1] = ForceGravitationSoleil(x_,x1_)[1]+ForceGravitationTerre(x_,x1_)[1]+ForceGravitationLune(x_,x1_)[1]+ForceFrottement(x_,x1_)[1]+ForceSolaire(x_,x1_)[1];
-  accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]+ForceSolaire(x_,x1_)[2];
+  accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceGravitationLune(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]/mass+ForceSolaire(x_,x1_)[0]/mass;
+  accelere[1] = ForceGravitationSoleil(x_,x1_)[1]+ForceGravitationTerre(x_,x1_)[1]+ForceGravitationLune(x_,x1_)[1]+ForceFrottement(x_,x1_)[1]/mass+ForceSolaire(x_,x1_)[1]/mass;
+  accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 
   return accelere;
 }
@@ -238,6 +247,7 @@ public:
     x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
+    Area   = configFile.get<double>("Area");		 // lire composante de l'aire
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
     year = configFile.get<double>("year"); // Lire l'heure de la détection
