@@ -158,20 +158,22 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
   valarray<double> force= valarray<double>(0.e0,3);
 
 
-/*  force = G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
+/*force = -G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[0]);
   force[1] = force[1] * (x_[1]-x1_[1]);
   force[2] = force[2] * (x_[2]-x1_[2]);*/
+
   return force;
 }
 valarray<double> ForceGravitationLune(valarray<double> const& x_,valarray<double> const& x1_) const {
 
   valarray<double> force= valarray<double>(0.e0,3);
-  /*force = G*masse_lune/(norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_)));
+ /*force = -G*masse_lune/(norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[3]);
   force[1] = force[1] * (x_[1]-x1_[4]);
   force[2] = force[2] * (x_[2]-x1_[5]);*/
-  return force;
+
+    return force;
 }
 valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<double> const& x1_) const {
 
