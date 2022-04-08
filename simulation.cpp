@@ -133,6 +133,9 @@ int day,month,year,hour,minute,second;
 const double astronomical_unit= 1.496e11;
 double area; // Aire du satellite recevant la lumière du soleil
 valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
+// donnes internes
+  double t,dt,tol;        // Temps courant pas de temps
+  valarray<double> x=valarray<double>(0.e0,6); // Position des astres
 
   template<typename T> valarray<T> heliocentricshift(valarray<double> position)
   {
@@ -186,10 +189,21 @@ force[2] = force[2] * (x1_[8] - x_[2]);
 
 return force;
 }
-valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
-
-valarray<double> force= valarray<double>(0.e0,3);
-return force;
+valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const { 
+	// Force de frottement atmosphérique pour des satellites entre 100km et 1000km d'altitude
+	// x_ : Position du satellite (taille 6, 3 pos + 3 vit), x1_ : Positions des astres (taille 12, 3*4 pos)
+	/*valarray<double> e_v = valarray<double>(0.e0,3); // Vecteur vitesse normalisé du satellite
+	Valarray<double omega_T = valarray<double(0.e0,3); // Vecteur vitesse angulaire terrestre
+	omega_T[0] = 0;
+	omega_T[1] = 0;
+	omega_T[2] = 0.7292*10^(-4); // rad/s
+	valarray<double> v_r = valarray<double>(0.e0,3); // Vecteur vitesse relative du satellite par rapport à celle de l'atmosphère
+	v_r = x_[slice(3,3,1)] - vectorProduct(omega_T,x_[slice(0,3,1)]);
+	force = -0.5*C_d*A_drag*rho*v_r^2*e_v;*/
+	valarray<double> force= valarray<double>(0.e0,3);
+	return force;
+	/*TO DO :
+	 * Implémenter rho, C_d, A_drag, e_v*/
 }
 valarray<double> ForceSolaire(valarray<double> const& x_,valarray<double> const& x1_) const {
 
@@ -212,9 +226,6 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
 
   return accelere;
 }
-  // donnes internes
-  double t,dt,tol;        // Temps courant pas de temps
-  valarray<double> x=valarray<double>(0.e0,6); // Position des astres
 
 public:
 
@@ -281,9 +292,9 @@ public:
 
     Ephemeris::setLocationOnEarth(46.61910958572537, 6.220300715342668);
    Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
-   valarray<double> positionSoleil =  -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance);
+   valarray<double> positionSoleil =  -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance); //Vecteur Soleil -> Terre
   Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
-  valarray<double> positionLune = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance); // Géocentrique
+  valarray<double> positionLune = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance); // Géocentrique (Terre -> Lune)
   x = x0; // Initialisation du satellite héliocentrique
   x[slice(0,3,1)] += positionSoleil;
     // Initialisation des positions
