@@ -20,44 +20,69 @@ template<typename T> T norm2(valarray<T> const& array){
   // compute and return the norm2 of a valarray
   return sqrt((array*array).sum());
 }
-
-// Convertit le surplus de seconde (i.e. plus de 60 seconde) en minute, heure, jour, mois, année
-void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, int& second )
+// Change les mois
+void chgmtmonth(int& day, int& month, int& year, int& heure,int& minute, double& second)
 {
-  while(second >= 60){
-    second -= 60;
-    minute += 1;
-  }
-  while(minute >= 60){
-	minute -= 60;
-	heure += 1;
-  }
-  while (heure >= 24) {
-    heure -= 24;
-    day += 1;
-  }
   if ((month == 1 or month ==3 or month == 5 or month ==7 or month ==8 or month == 10) && day > 31) {
     day -=31;
     month += 1;
+
+    chgmtmonth(day,month, year, heure,minute,second);
+
   }
   else if ((month == 4 or month == 6 or month ==9 or month == 11) && day > 30) {
 	day -=30;
 	month += 1;
+
+  chgmtmonth(day,month, year, heure,minute,second);
   }
   else if (month == 2 && day > 28 && year % 4 != 0) {
 	day -=28;
 	month += 1;
+
+  chgmtmonth(day,month, year, heure,minute,second);
   }
   // Année bissextile
   else if (month == 2 && day > 28 && year % 4 == 0){
 	day -=29;
 	month += 1;
+
+  chgmtmonth(day,month, year, heure,minute,second);
   }
   else if (month == 12 && day > 31){
 	day -= 31;
 	month -= 11;
 	year += 1;
+
+  chgmtmonth(day,month, year, heure,minute,second);
   }
+  else {
+    return ;
+  }
+}
+// Convertit le surplus de seconde (i.e. plus de 60 seconde) en minute, heure, jour, mois, année
+void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, double& second )
+{
+
+  while(second >= 60){
+    second -= 60;
+    minute += 1;
+  }
+
+  while(minute >= 60){
+	minute -= 60;
+	heure += 1;
+
+  }
+
+  while (heure >= 24) {
+    heure -= 24;
+    day += 1;
+
+  }
+
+  chgmtmonth(day,month, year, heure,minute,second);
+
 }
 template<typename T> valarray<T> vectorProduct(valarray<T> const& array1,\
 valarray<T> const& array2){
@@ -129,7 +154,8 @@ protected:
   double mass ;  // masses des corps
   SolarSystemObject Soleil;
   SolarSystemObject Lune ;
-int day,month,year,hour,minute,second;
+int day,month,year,hour,minute;
+double second;
 const double astronomical_unit= 1.496e11;
 double area; // Aire du satellite recevant la lumière du soleil
 valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
@@ -258,7 +284,7 @@ public:
     x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
-    Area   = configFile.get<double>("Area");		 // lire composante de l'aire
+    area   = configFile.get<double>("Area");		 // lire composante de l'aire
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
     year = configFile.get<double>("year"); // Lire l'heure de la détection
