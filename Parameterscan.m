@@ -31,9 +31,9 @@ param = nsteps; % Valeurs du parametre a scanner  MODIFIER SELON VOS BESOINS
  for i = 1:nsimul
      output{i} = [paramstr, '=', num2str(param(i)), '.out'];
      % Execution du programme en lui envoyant la valeur a scanner en argument
-     cmd = sprintf('%s%s %s %s=%.15g output=%s', repertoire, executable, input, paramstr, param(i), output{i});
-     disp(cmd);
-     system(cmd);
+    % cmd = sprintf('%s%s %s %s=%.15g output=%s', repertoire, executable, input, paramstr, param(i), output{i});
+    % disp(cmd);
+    % system(cmd);
  end
 
 % %% Analyse %%
@@ -48,11 +48,10 @@ param = nsteps; % Valeurs du parametre a scanner  MODIFIER SELON VOS BESOINS
 % 
 for i = 1:nsimul % Parcours des resultats de toutes les simulations
     data = load(output{i}); % Chargement du fichier de sortie de la i-ieme simulation
-    dt(i) = tfin./nsteps(i); % Delta t = t_2-t_1
-    data(end,1)
-    x_th = data(1,5)-data(end,5) % TODO: Entrer la vraie solution analytique a tfin
-    y_th = data(1,6)-data(end,6)
-    z_th = data(1,7)-data(end,7) % TODO: Entrer la vraie solution analytique a tfin
+   
+    x_th = data(1,5)-data(end,5); % TODO: Entrer la vraie solution analytique a tfin
+    y_th = data(1,6)-data(end,6);
+    z_th = data(1,7)-data(end,7); % TODO: Entrer la vraie solution analytique a tfin
     error(i) = sqrt((data(end,2)-data(end,5)-x_th).^2+(data(end,3)-data(end,6)-y_th).^2+(data(end,4)-data(end,7)-z_th).^2); % erreur sur la position finale
     xfinal(i) = data(end,2);
     yfinal(i) = data(end,3);
