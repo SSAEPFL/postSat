@@ -16,7 +16,7 @@ vy01    =  7676        % vitesse initiale en y [m/s] corps 1
 vz01    =  0.e0       % vitesse initiale en z [m/s] corps 1
 % Parametres numeriques :
 nsteps   =31558149  % nombre de pas de temps maximal (dt=tfin/nsteps)
-schema   = RK4  % Schema numerique RK4,SV
+schema   = SV  % Schema numerique RK4,SV
 tol     = 0       % tolerance methode Adaptatif
 output   = output.out % nome/adresse du fichier d'output
-sampling = 2      % nombre de pas de temps entre deux ecritures, no sampling = -1
+sampling = 24358674     % nombre de pas de temps entre deux ecritures, no sampling = -1

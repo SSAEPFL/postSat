@@ -215,7 +215,7 @@ force[2] = force[2] * (x1_[8] - x_[2]);
 
 return force;
 }
-valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const { 
+valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
 	// Force de frottement atmosphérique pour des satellites entre 100km et 1000km d'altitude
 	// x_ : Position du satellite (taille 6, 3 pos + 3 vit), x1_ : Positions des astres (taille 12, 3*4 pos)
 	/*valarray<double> e_v = valarray<double>(0.e0,3); // Vecteur vitesse normalisé du satellite
@@ -514,13 +514,32 @@ public:
   void step(valarray<double>& x_,valarray<double>& x1_, double dt_) override
   {
 
-  valarray<double> temp = valarray<double>(5);
+  valarray<double> temp = valarray<double>(6);
 valarray<double> q = x_[slice(0,3,1)];
 valarray<double> p = x_[slice(3,3,1)];
-    temp[slice(0,3,1)] = dt*p+dt_*dt_*acceleration(x_,x1_)/(2.0);
-temp[slice(3,3,1)] +=dt_/(2.0)*(acceleration(x_+temp,x1_)+acceleration(x_,x1_));
+valarray<double> avant = x1_;
+    temp[slice(0,3,1)] = dt_*p+dt_*dt_*acceleration(x_,x1_)/(2.0);
+    valarray<double> positionSoleil =  -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance);
 
+    second+=dt_;
+    chgmtemps(day,  month,  year,  hour, minute, second );
+    Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
+    Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second);
+    x1_[0]    = 0.0;		 // lire composante x position Soleil
+    x1_[1]    = 0.0;		 // lire composante y position
+    x1_[2]    = 0.0;		 // lire composante z position
+    x1_[6]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Terre
+    x1_[7]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Terre
+    x1_[8]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Terre
+    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[6];		 // lire composante x position Lune
+    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[7];	 // lire composante y position Lune
+    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[8];
+temp[slice(3,3,1)] +=dt_/(2.0)*(acceleration(x_+temp,x1_)+acceleration(x_,avant));
+valarray<double> d_terresoleil = valarray<double>(0e0,3);
+
+d_terresoleil += -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)-positionSoleil;
 x_ += temp;
+x_[slice(0,3,1)] += d_terresoleil;
   }
 void  step2(double& dt_) override{ // Même fonction
 	// DON'T WORK !!

@@ -31,9 +31,9 @@ param = nsteps; % Valeurs du parametre a scanner  MODIFIER SELON VOS BESOINS
  for i = 1:nsimul
      output{i} = [paramstr, '=', num2str(param(i)), '.out'];
      % Execution du programme en lui envoyant la valeur a scanner en argument
-    % cmd = sprintf('%s%s %s %s=%.15g output=%s', repertoire, executable, input, paramstr, param(i), output{i});
-    % disp(cmd);
-    % system(cmd);
+%      cmd = sprintf('%s%s %s %s=%.15g output=%s', repertoire, executable, input, paramstr, param(i), output{i});
+%      disp(cmd);
+%      system(cmd);
  end
 
 % %% Analyse %%
@@ -49,22 +49,22 @@ param = nsteps; % Valeurs du parametre a scanner  MODIFIER SELON VOS BESOINS
 for i = 1:nsimul % Parcours des resultats de toutes les simulations
     data = load(output{i}); % Chargement du fichier de sortie de la i-ieme simulation
    
-    x_th = data(1,5)-data(end,5); % TODO: Entrer la vraie solution analytique a tfin
-    y_th = data(1,6)-data(end,6);
-    z_th = data(1,7)-data(end,7); % TODO: Entrer la vraie solution analytique a tfin
-    error(i) = sqrt((data(end,2)-data(end,5)-x_th).^2+(data(end,3)-data(end,6)-y_th).^2+(data(end,4)-data(end,7)-z_th).^2); % erreur sur la position finale
+    x_th = data(1,2)-data(1,5); % TODO: Entrer la vraie solution analytique a tfin
+    y_th = data(1,3)-data(1,6);
+    z_th = data(1,4)-data(1,7); % TODO: Entrer la vraie solution analytique a tfin
+    error(i) = sqrt((data(end,2)-data(end,5)-x_th).^2+(data(end,3)-data(end,5)-y_th).^2+(data(end,4)-data(end,6)-z_th).^2); % erreur sur la position finale
     xfinal(i) = data(end,2);
     yfinal(i) = data(end,3);
     zfinal(i) = data(end,4);
 end
-
- coeff_fitx = polyfit(dt(1:13),xfinal(1:13), 1)
-  xFitx = linspace(min(dt), max(dt), 100000);
-   coeff_fity = polyfit(dt(1:13),yfinal(1:13), 1)
-  xFity = linspace(min(dt), max(dt), 100000);
-   coeff_fitz = polyfit(dt(1:13),zfinal(1:13), 1)
-  xFitz = linspace(min(dt), max(dt), 100000);
-  %yFit = polyval(coeff_fit, xFit); 
+% 
+%  coeff_fitx = polyfit(dt(1:13),xfinal(1:13), 1)
+%   xFitx = linspace(min(dt), max(dt), 100000);
+%    coeff_fity = polyfit(dt(1:13),yfinal(1:13), 1)
+%   xFity = linspace(min(dt), max(dt), 100000);
+%    coeff_fitz = polyfit(dt(1:13),zfinal(1:13), 1)
+%   xFitz = linspace(min(dt), max(dt), 100000);
+%   %yFit = polyval(coeff_fit, xFit); 
 % coeff_fit_vit = polyfit(log(nsteps(1:10)),log(error2(1:10)), 1)
 %  xFit_vit = linspace(min(log(nsteps(1:10))), max(log(nsteps(1:10))), 1000);
 %  yFit_vit = polyval(coeff_fit_vit, xFit_vit);
@@ -72,12 +72,12 @@ end
 %  xFit_emec = linspace(min(log(nsteps(1:10))), max(log(nsteps(1:10))), 1000);
 %  yFit_emec = polyval(coeff_fit_emec, xFit_emec); 
 % 
-for i = 1:nsimul
-    data = load(output{i});
-    error(i) = sqrt((data(end,2)-coeff_fitx(2)).^2+(data(end,3)-coeff_fity(2)).^2+(data(end,4)-coeff_fitz(2)).^2); % erreur sur la position finale
-end
+% for i = 1:nsimul
+%     data = load(output{i});
+%     error(i) = sqrt((data(end,2)-coeff_fitx(2)).^2+(data(end,3)-coeff_fity(2)).^2+(data(end,4)-coeff_fitz(2)).^2); % erreur sur la position finale
+% end
  figure
- loglog(dt, error, 'kx-', 'Linewidth', 1.5)
+ loglog(nsteps, error, 'kx-', 'Linewidth', 1.5)
 
  hold on 
 

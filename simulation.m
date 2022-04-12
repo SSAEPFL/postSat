@@ -1,6 +1,6 @@
 %
 %
-%  data = load('output.out');
+  data = load('output.out');
 % figure
 % title('Ascension ')
 % plot(data(:,1),data(:,2),'rx') % Soleil 1 ans
@@ -20,18 +20,18 @@
 % zlabel('z')
 %
 % figure
-%
+% 
 % hold on
-%
+% 
 % plot3(data(:,2),data(:,3),data(:,4),'k-') % Satellite
-% plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
-%
+% plot3(data(:,5),data(:,6),data(:,7),'r--') % Terre
+% 
 % xlabel('x')
 % ylabel('y')
 % zlabel('z')
 
 for i=1:7889538
-    if data(i,2) == data(i+7889538,2)
+    if data(i,5) == data(i+7889538,5)
         i
     end
 end
