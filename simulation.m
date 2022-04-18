@@ -19,19 +19,14 @@
 % ylabel('y')
 % zlabel('z')
 %
-% figure
+figure
+ 
+ hold on
+ 
+ plot3(data(:,2),data(:,3),data(:,4),'k-') % Satellite
+ plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
 % 
-% hold on
-% 
-% plot3(data(:,2),data(:,3),data(:,4),'k-') % Satellite
-% plot3(data(:,5),data(:,6),data(:,7),'r--') % Terre
-% 
-% xlabel('x')
-% ylabel('y')
-% zlabel('z')
+ xlabel('x')
+ ylabel('y')
+ zlabel('z')
 
-for i=1:7889538
-    if data(i,5) == data(i+7889538,5)
-        i
-    end
-end

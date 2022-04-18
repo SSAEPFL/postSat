@@ -5,6 +5,7 @@
 #include <valarray>       // valarray functions
 #include "ConfigFile.h" // Il contient les methodes pour lire inputs et ecrire outputs
                           // Fichier .tpp car inclut fonctions template
+#include<stdio.h>
 #include "ephemeris/Ephemeris.hpp"
 
 using namespace std; // ouvrir un namespace avec la librairie c++ de base
@@ -63,6 +64,18 @@ void chgmtmonth(int& day, int& month, int& year, int& heure,int& minute, double&
 // Convertit le surplus de seconde (i.e. plus de 60 seconde) en minute, heure, jour, mois, année
 void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, double& second )
 {
+if (second < 0){
+  second += 60;
+  minute -= 1;
+  if(minute < 0){
+    minute += 60;
+    heure -= 1;
+    if(heure < 0){
+      heure += 24;
+      day -= 1;
+      }
+    }
+  }
 
   while(second >= 60){
     second -= 60;
@@ -84,6 +97,8 @@ void chgmtemps(int& day, int& month, int& year, int& heure,int& minute, double& 
   chgmtmonth(day,month, year, heure,minute,second);
 
 }
+//Fonction rendant continu RA et DEC
+
 template<typename T> valarray<T> vectorProduct(valarray<T> const& array1,\
 valarray<T> const& array2){
   // initialiser le nouveau valarray
@@ -99,15 +114,28 @@ valarray<T> const& array2){
 valarray<double> equatorialtocartesian(double ascension,\
 double declinaison, double distance){ // Transformation du système equatorial à Cartesien par rapport au point VERNAL
 valarray<double> array3 = valarray<double>(3);
-double hr2rad = 2*3.1415926535897932384626433832795028841971/24; // Conversion d'angle en heure -> radians
-double deg2rad = 3.1415926535897932384626433832795028841971/180; // Conversion d'angle en degré -> radians
+double hr2rad = 2*3.1415926535897932384626433832795028841971/24.0; // Conversion d'angle en heure -> radians
+double deg2rad = 3.1415926535897932384626433832795028841971/180.0; // Conversion d'angle en degré -> radians
   array3[0] = distance*cos(hr2rad*ascension)*cos(deg2rad*declinaison); // premier composante
   array3[1] = distance*sin(hr2rad*ascension)*cos(deg2rad*declinaison); // deuxieme composante
   array3[2] = distance*sin(deg2rad*declinaison); // troisieme composante
   return array3;
 }
 
+valarray<double> continuationRADEC(double dt_,int day, int month, int year, int heure,int minute, double second  ){
+chgmtemps(day,month,year,heure,minute,second);
+SolarSystemObject Soleil_avant= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, heure, minute, second);
+  second += 50.0;
+  chgmtemps(day,month,year,heure,minute,second);
+  SolarSystemObject Soleil_apres=Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, heure, minute, second);
+  valarray<double> continu = valarray<double>(3);
+  double ra = Soleil_avant.equaCoordinates.ra + (-Soleil_avant.equaCoordinates.ra+Soleil_apres.equaCoordinates.ra)/50.0 * dt_;
+  double dec =  Soleil_avant.equaCoordinates.dec + (-Soleil_avant.equaCoordinates.dec+Soleil_apres.equaCoordinates.dec)/50.0 * dt_;
 
+  continu = equatorialtocartesian(ra, dec, 1.496e11*Soleil_avant.distance);
+
+  return continu;
+}
 /* La class Engine est le moteur principale de ce code. Il contient
    les methodes de base pour lire / initialiser les inputs,
    preparer les outputs et calculer les donnees necessaires
@@ -231,6 +259,7 @@ valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> con
 	/*TO DO :
 	 * Implémenter rho, C_d, A_drag, e_v*/
 }
+
 valarray<double> ForceSolaire(valarray<double> const& x_,valarray<double> const& x1_) const {
 
 valarray<double> force= valarray<double>(0.e0,3);
@@ -244,18 +273,91 @@ force[1] = x_[1]/norm2(x_);
 force[2] = x_[2]/norm2(x_);*/
 return force;
 }
-valarray<double> acceleration(valarray<double> const& x_,valarray<double> const& x1_) const{
+valarray<double> ForceCoriolis(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
+
+valarray<double> force= valarray<double>(0.e0,3);
+
+valarray<double> vitesser= valarray<double>(0.e0,3);
+vitesser = x_[slice(3,3,1)];
+force = continuationRADEC(dt_,jour, mois, annee, heure, minute,second);
+force -= x1_[slice(0,3,1)];
+
+force /= dt_;
+// -2m \omega x vitessesatellite
+double distance =sqrt(x1_[0]*x1_[0] + x1_[1]*x1_[1]+x1_[2]*x1_[2]);
+double vitesseangulaire = norm2(force)/distance;
+
+valarray<double> ez= valarray<double>(0.e0,3);
+ez[2] =-2.0*vitesseangulaire;
+
+
+
+return vectorProduct(ez, vitesser);
+
+
+
+}
+valarray<double> ForceCentrifuge(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const
+{
+  // OK
+  // \omega cross \omega cross position
+
+  valarray<double> vect_der= valarray<double>(0.e0,3);
+  valarray<double> position= valarray<double>(0.e0,3);
+  valarray<double> resultante= valarray<double>(0.e0,3);
+
+  position = x_[slice(0,3,1)];
+   vect_der = continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_);
+   vect_der -= x1_[slice(0,3,1)];
+   vect_der /= dt_;
+  // -2m \omega x vitessesatellite
+  double distance =sqrt(x1_[0]*x1_[0] + x1_[1]*x1_[1]+x1_[2]*x1_[2]);
+  double vitesseangulaire = norm2( vect_der)/distance;
+  valarray<double> ez= valarray<double>(0.e0,3);
+  ez[2] =-vitesseangulaire;
+  resultante = vectorProduct(ez,position);
+  resultante = vectorProduct(resultante,ez);
+
+
+  return resultante;
+
+}
+
+valarray<double> ForceEuler(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const
+{
+
+  valarray<double> vect_der= valarray<double>(0.e0,3);
+  valarray<double> position= valarray<double>(0.e0,3);
+/*
+  position = x_[slice(0,3,1)];
+
+  // A optimiser
+if (t>2*dt_){
+  vect_der= continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_);
+  vect_der += continuationRADEC(dt_,jour, mois, annee, heure, minute,second-dt_);
+  vect_der -= 2.0*continuationRADEC(dt_,jour, mois, annee, heure, minute,t);
+  vect_der /= dt_*dt_;
+}
+vect_der = vectorProduct(vect_der,position);
+*/
+return -vect_der;
+}
+
+
+valarray<double> acceleration(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const{
   valarray<double> accelere(0.e1,3);
-  accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceGravitationLune(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]/mass+ForceSolaire(x_,x1_)[0]/mass;
+  /*accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceGravitationLune(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]/mass+ForceSolaire(x_,x1_)[0]/mass ;
   accelere[1] = ForceGravitationSoleil(x_,x1_)[1]+ForceGravitationTerre(x_,x1_)[1]+ForceGravitationLune(x_,x1_)[1]+ForceFrottement(x_,x1_)[1]/mass+ForceSolaire(x_,x1_)[1]/mass;
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
+*/
 
+accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
   return accelere;
 }
 
 public:
 
-  valarray<double> fonction(valarray<double>const& x_,valarray<double> const& x1_) const {
+  /*valarray<double> fonction(valarray<double>const& x_,valarray<double> const& x1_) const {
       valarray<double> f = valarray<double>(0.e0, 6);
       valarray<double> accelere = valarray<double>(0.e0, 3);
       accelere = acceleration(x_,x1_);
@@ -264,7 +366,7 @@ public:
         f[i+3] = accelere[i];
   }
       return f;
-    }
+    }*/
   /* Constructeur de la classe Engine
      inputs:
        configFile: (ConfigFile) handler du fichier d'input
@@ -318,21 +420,20 @@ public:
 
     Ephemeris::setLocationOnEarth(46.61910958572537, 6.220300715342668);
    Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
-   valarray<double> positionSoleil =  -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance); //Vecteur Soleil -> Terre
   Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
   valarray<double> positionLune = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance); // Géocentrique (Terre -> Lune)
   x = x0; // Initialisation du satellite héliocentrique
-  x[slice(0,3,1)] += positionSoleil;
+
     // Initialisation des positions
-    x1[6]    = positionSoleil[0];		 // lire composante x position initiale Terre
-    x1[7]    = positionSoleil[1];		 // lire composante y position initiale Terre
-    x1[8]    = positionSoleil[2];		 // lire composante z position initiale Terre
-    x1[0]    = 0.0;		 // lire composante x position initiale Corps Soleil
-    x1[1]    = 0.0;		 // lire composante y position initiale Corps Soleil
-    x1[2]    = 0.0;		 // lire composante z position initiale Corps Soleil
-    x1[3]    = positionLune[0] + positionSoleil[0];		 //  Lune Héliocentrique
-    x1[4]    = positionLune[1] + positionSoleil[1];	 // Lune Héliocentrique
-    x1[5]    = positionLune[2] + positionSoleil[2];		 //Lune Héliocentrique
+    x1[6]    = 0.0;		 // lire composante x position initiale Terre
+    x1[7]    = 0.0;		 // lire composante y position initiale Terre
+    x1[8]    = 0.0;		 // lire composante z position initiale Terre
+    x1[0]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position initiale Corps Soleil
+    x1[1]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position initiale Corps Soleil
+    x1[2]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];	 // lire composante z position initiale Corps Soleil
+    x1[3]    = positionLune[0] ;		 //  Lune Héliocentrique
+    x1[4]    = positionLune[1];	 // Lune Héliocentrique
+    x1[5]    = positionLune[2];		 //Lune Héliocentrique
 
     last = 0; // initialise le parametre d'ecriture
     printOut(true); // ne pas ecrire premier pas de temps
@@ -342,6 +443,7 @@ public:
       step(x,x1,dt);  // faire la mise a jour de la simulation
       t+=dt;
       printOut(false); // ecrire pas de temps actuel
+      cout << t << "\r";
     }
     if (tfin > t){
       dt = tfin-t;
@@ -419,38 +521,32 @@ public:
     */
 //
     // Tentative avec Euler-Chromer
-    valarray<double> positionSoleil =  -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance);
     valarray<double> positiontemporaire = x_[slice(0,3,1)];
     valarray<double> vitessetemporaire = x_[slice(3,3,1)];
     valarray<double> d_terresoleil =valarray<double>(0e0,3);
-
+    cout <<vitessetemporaire[0] <<" " <<vitessetemporaire[1] << " "<<vitessetemporaire[2] << " " <<endl;
      positiontemporaire += vitessetemporaire*dt_;
-    vitessetemporaire += acceleration(positiontemporaire,x1_)*dt_;
+    vitessetemporaire += acceleration(positiontemporaire,x1_,dt_,second+dt_,minute, hour,day, month, year)*dt_;
 
 
-
-    positiontemporaire = positiontemporaire - positionSoleil; // Passage en géocentrique
     second += dt_;
     //Mise à jour des astres
     chgmtemps(day,month,year,hour,minute,second);
     Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second);
-    //Déplacement de la terre
-     d_terresoleil = (-equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)-positionSoleil);
-    // La nouvelle position est donc le déplacement de la terre + celui du satellite
-    x_[slice(0,3,1)] = positiontemporaire+d_terresoleil;
+    // La nouvelle position, celui du satellite
+    x_[slice(0,3,1)] = positiontemporaire;
     x_[slice(3,3,1)] = vitessetemporaire;
     //Mise a jour des positions des astres
-    x1_[0]    = 0.0;		 // lire composante x position Soleil
-    x1_[1]    = 0.0;		 // lire composante y position
-    x1_[2]    = 0.0;		 // lire composante z position
-    x1_[6]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Terre
-    x1_[7]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Terre
-    x1_[8]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Terre
-    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[6];		 // lire composante x position Lune
-    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[7];	 // lire composante y position Lune
-    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[8];		 // lire composante z position Lune
-    x_[slice(0,3,1)] += positionSoleil; //Retour en héliocentrique
+    x1_[6]    = 0.0;		 // lire composante x position Terre
+    x1_[7]    = 0.0;		 // lire composante y position
+    x1_[8]    = 0.0;		 // lire composante z position
+    x1_[0]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Soleil
+    x1_[1]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Soleil
+    x1_[2]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Soleil
+    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0];		 // lire composante x position Lune
+    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1];	 // lire composante y position Lune
+    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2];		 // lire composante z position Lune
 
   }
 
@@ -514,32 +610,32 @@ public:
   void step(valarray<double>& x_,valarray<double>& x1_, double dt_) override
   {
 
-  valarray<double> temp = valarray<double>(6);
+  valarray<double> temp = valarray<double>(0.0,6);
 valarray<double> q = x_[slice(0,3,1)];
 valarray<double> p = x_[slice(3,3,1)];
 valarray<double> avant = x1_;
-    temp[slice(0,3,1)] = dt_*p+dt_*dt_*acceleration(x_,x1_)/(2.0);
+    temp[slice(0,3,1)] = dt_*p+dt_*dt_*acceleration(x_,x1_,dt_,second,minute, hour,day, month, year)/(2.0);
     valarray<double> positionSoleil =  -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance);
 
     second+=dt_;
     chgmtemps(day,  month,  year,  hour, minute, second );
     Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second);
-    x1_[0]    = 0.0;		 // lire composante x position Soleil
-    x1_[1]    = 0.0;		 // lire composante y position
-    x1_[2]    = 0.0;		 // lire composante z position
-    x1_[6]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Terre
-    x1_[7]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Terre
-    x1_[8]    = -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Terre
-    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] + x1_[6];		 // lire composante x position Lune
-    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] + x1_[7];	 // lire composante y position Lune
-    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] + x1_[8];
-temp[slice(3,3,1)] +=dt_/(2.0)*(acceleration(x_+temp,x1_)+acceleration(x_,avant));
+    x1_[6]    = 0.0;		 // lire composante x position Soleil
+    x1_[7]    = 0.0;		 // lire composante y position
+    x1_[8]    = 0.0;		 // lire composante z position
+    x1_[0]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Terre
+    x1_[1]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Terre
+    x1_[2]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Terre
+    x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] ;		 // lire composante x position Lune
+    x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] ;	 // lire composante y position Lune
+    x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] ;
+temp[slice(3,3,1)] +=dt_/(2.0)*(acceleration(x_+temp,x1_,dt_,second,minute, hour,day, month, year)+acceleration(x_,avant,dt_,second-dt,minute,  hour,day, month, year)); // erreur possible
 valarray<double> d_terresoleil = valarray<double>(0e0,3);
 
-d_terresoleil += -equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)-positionSoleil;
+
 x_ += temp;
-x_[slice(0,3,1)] += d_terresoleil;
+
   }
 void  step2(double& dt_) override{ // Même fonction
 	// DON'T WORK !!
