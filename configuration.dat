@@ -1,5 +1,5 @@
 % Parametres physiques :
-tfin   = 3.155814954e7 % temps total maximal de simulation [s]
+tfin   = 10000 % temps total maximal de simulation [s] 3.155814954e7
 day=4
 month=3
 year=2022
@@ -15,8 +15,8 @@ vx01    = 0.e0       % vitesse initiale en x [m/s] corps 1
 vy01    =  7676        % vitesse initiale en y [m/s] corps 1
 vz01    =  0.e0       % vitesse initiale en z [m/s] corps 1
 % Parametres numeriques :
-nsteps   =31558149  % nombre de pas de temps maximal (dt=tfin/nsteps)
-schema   = SV  % Schema numerique RK4,SV
+nsteps   =10000   % nombre de pas de temps maximal (dt=tfin/nsteps)
+schema   = RK4  % Schema numerique RK4,SV
 tol     = 0       % tolerance methode Adaptatif
 output   = output.out % nome/adresse du fichier d'output
-sampling = 24358674     % nombre de pas de temps entre deux ecritures, no sampling = -1
+sampling = 1     % nombre de pas de temps entre deux ecritures, no sampling = -1
