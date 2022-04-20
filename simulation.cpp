@@ -77,7 +77,7 @@ if (second < 0){
     }
   }
 
-  while(second >= 60){
+  /*while(second >= 60){
     second -= 60;
     minute += 1;
   }
@@ -92,7 +92,12 @@ if (second < 0){
     heure -= 24;
     day += 1;
 
-  }
+  }*/
+  minute += int(second) / 60;
+  second = int(second) % 60 + (second - int(second));
+  heure += minute / 60;
+  minute = minute % 60;
+  day += heure / 24;
 
   chgmtmonth(day,month, year, heure,minute,second);
 
@@ -212,37 +217,40 @@ valarray<double> distance(int j, valarray<double> const& x_,valarray<double> x1_
 
   return diff;
 }
+
 valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<double> const& x1_) const {
   valarray<double> force= valarray<double>(0.e0,3);
-
-
-/*force = -G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
+  
+  force = -G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[0]);
   force[1] = force[1] * (x_[1]-x1_[1]);
-  force[2] = force[2] * (x_[2]-x1_[2]);*/
+  force[2] = force[2] * (x_[2]-x1_[2]);
 
   return force;
 }
+
 valarray<double> ForceGravitationLune(valarray<double> const& x_,valarray<double> const& x1_) const {
 
   valarray<double> force= valarray<double>(0.e0,3);
- /*force = -G*masse_lune/(norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_)));
+  force = -G*masse_lune/(norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[3]);
   force[1] = force[1] * (x_[1]-x1_[4]);
-  force[2] = force[2] * (x_[2]-x1_[5]);*/
+  force[2] = force[2] * (x_[2]-x1_[5]);
 
     return force;
 }
+
 valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<double> const& x1_) const {
 
-valarray<double> force= valarray<double>(0.e0,3);
-force = G*masse_terre/(norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_)));
-force[0] = force[0] * (x1_[6] - x_[0]);
-force[1] = force[1] * (x1_[7] - x_[1]);
-force[2] = force[2] * (x1_[8] - x_[2]);
+  valarray<double> force= valarray<double>(0.e0,3);
+  force = G*masse_terre/(norm2(distance(3,x_,x1_))*norm2(distance(3,x_,x1_))*norm2  (distance(3,x_,x1_)));
+  force[0] = force[0] * (x1_[6] - x_[0]);
+  force[1] = force[1] * (x1_[7] - x_[1]);
+  force[2] = force[2] * (x1_[8] - x_[2]);
 
 return force;
 }
+
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
 	// Force de frottement atmosphérique pour des satellites entre 100km et 1000km d'altitude
 	// x_ : Position du satellite (taille 6, 3 pos + 3 vit), x1_ : Positions des astres (taille 12, 3*4 pos)
@@ -275,72 +283,64 @@ return force;
 }
 valarray<double> ForceCoriolis(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
 
-valarray<double> force= valarray<double>(0.e0,3);
+  valarray<double> vitesse_terre = valarray<double>(0.e0,3);
+  vitesse_terre = (continuationRADEC(dt_, jour, mois, annee, heure, minute, second) - x1_[slice(0, 3, 1)])/ dt_;
 
-valarray<double> vitesser= valarray<double>(0.e0,3);
-vitesser = x_[slice(3,3,1)];
-force = continuationRADEC(dt_,jour, mois, annee, heure, minute,second);
-force -= x1_[slice(0,3,1)];
+  valarray<double> vitesser = x_[slice(3,3,1)];
+  
+  // -2m \omega x vitessesatellite
+  double distance = sqrt(x1_[0] * x1_[0] + x1_[1] * x1_[1] + x1_[2] * x1_[2]);
+  double vitesseangulaire = norm2(vitesse_terre)/distance;
 
-force /= dt_;
-// -2m \omega x vitessesatellite
-double distance =sqrt(x1_[0]*x1_[0] + x1_[1]*x1_[1]+x1_[2]*x1_[2]);
-double vitesseangulaire = norm2(force)/distance;
+  valarray<double> ez = valarray<double>(0.e0,3);
+  ez[2] = vitesseangulaire;
 
-valarray<double> ez= valarray<double>(0.e0,3);
-ez[2] =-2.0*vitesseangulaire;
+  valarray<double> resultante = valarray<double>(0.e0, 3);
+  resultante = vectorProduct(ez, vitesser);
 
-
-
-return vectorProduct(ez, vitesser);
-
-
-
+  return -2*resultante;
 }
-valarray<double> ForceCentrifuge(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const
-{
+
+valarray<double> ForceCentrifuge(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
   // OK
   // \omega cross \omega cross position
 
-  valarray<double> vect_der= valarray<double>(0.e0,3);
-  valarray<double> position= valarray<double>(0.e0,3);
-  valarray<double> resultante= valarray<double>(0.e0,3);
+  valarray<double> vect_der = valarray<double>(0.e0,3);
+  valarray<double> position = valarray<double>(0.e0,3);
+  valarray<double> resultante = valarray<double>(0.e0,3);
 
   position = x_[slice(0,3,1)];
-   vect_der = continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_);
-   vect_der -= x1_[slice(0,3,1)];
-   vect_der /= dt_;
+  vect_der = (continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_) - x1_[slice(0,3,1)]) / dt_;
+
   // -2m \omega x vitessesatellite
-  double distance =sqrt(x1_[0]*x1_[0] + x1_[1]*x1_[1]+x1_[2]*x1_[2]);
+  double distance = sqrt(x1_[0]*x1_[0] + x1_[1]*x1_[1]+x1_[2]*x1_[2]);
   double vitesseangulaire = norm2( vect_der)/distance;
-  valarray<double> ez= valarray<double>(0.e0,3);
-  ez[2] =-vitesseangulaire;
+  valarray<double> ez = valarray<double>(0.e0,3);
+  ez[2] = 2*-vitesseangulaire;
   resultante = vectorProduct(ez,position);
   resultante = vectorProduct(resultante,ez);
 
-
   return resultante;
-
 }
 
-valarray<double> ForceEuler(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const
-{
+valarray<double> ForceEuler(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
 
-  valarray<double> vect_der= valarray<double>(0.e0,3);
-  valarray<double> position= valarray<double>(0.e0,3);
-/*
-  position = x_[slice(0,3,1)];
+  valarray<double> vect_der = valarray<double>(0.e0,3);
+  return vect_der;
+  valarray<double> position = x_[slice(0,3,1)];
 
   // A optimiser
-if (t>2*dt_){
-  vect_der= continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_);
-  vect_der += continuationRADEC(dt_,jour, mois, annee, heure, minute,second-dt_);
-  vect_der -= 2.0*continuationRADEC(dt_,jour, mois, annee, heure, minute,t);
-  vect_der /= dt_*dt_;
-}
-vect_der = vectorProduct(vect_der,position);
-*/
-return -vect_der;
+  if (t>2*dt_) {
+    vect_der = continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_);
+    vect_der += continuationRADEC(dt_,jour, mois, annee, heure, minute,second-dt_)  ;
+    vect_der -= 2.0*continuationRADEC(dt_,jour, mois, annee, heure, minute,t);
+    vect_der /= dt_*dt_;
+  }
+  cout << "2e der " << norm2(vect_der) << endl; // problème est là, l'accélération angulaire est beaucoup trop grande !!
+
+  vect_der = -vectorProduct(vect_der,position);
+
+  return vect_der;
 }
 
 
@@ -423,7 +423,6 @@ public:
   Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
   valarray<double> positionLune = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance); // Géocentrique (Terre -> Lune)
   x = x0; // Initialisation du satellite héliocentrique
-
     // Initialisation des positions
     x1[6]    = 0.0;		 // lire composante x position initiale Terre
     x1[7]    = 0.0;		 // lire composante y position initiale Terre
@@ -524,9 +523,8 @@ public:
     valarray<double> positiontemporaire = x_[slice(0,3,1)];
     valarray<double> vitessetemporaire = x_[slice(3,3,1)];
     valarray<double> d_terresoleil =valarray<double>(0e0,3);
-    cout <<vitessetemporaire[0] <<" " <<vitessetemporaire[1] << " "<<vitessetemporaire[2] << " " <<endl;
-     positiontemporaire += vitessetemporaire*dt_;
-    vitessetemporaire += acceleration(positiontemporaire,x1_,dt_,second+dt_,minute, hour,day, month, year)*dt_;
+    positiontemporaire += vitessetemporaire*dt_;
+    vitessetemporaire += acceleration(x_,x1_,dt_,second+dt_,minute, hour,day, month, year)*dt_;
 
 
     second += dt_;
