@@ -1,6 +1,4 @@
-%
-%
-  data = load('output.out');
+data = load('output.out');
 % figure
 % title('Ascension ')
 % plot(data(:,1),data(:,2),'rx') % Soleil 1 ans
@@ -19,14 +17,27 @@
 % ylabel('y')
 % zlabel('z')
 %
-figure
- 
- hold on
- 
- plot3(data(:,2),data(:,3),data(:,4),'k-') % Satellite
- plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
-% 
- xlabel('x')
- ylabel('y')
- zlabel('z')
 
+% Make unit sphere
+[x,y,z] = sphere;
+% Scale to desire radius.
+radius = 6.371009e6;
+x = x * radius;
+y = y * radius;
+z = z * radius;
+
+figure(1) 
+plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
+hold on
+plot3(data(:,2),data(:,3),data(:,4), 'k-') % Satellite
+surf(x,y,z) % terre
+hold off
+xlabel('x')
+ylabel('y')
+zlabel('z')
+
+r = sqrt(data(:,2).^2 + data(:,3).^2 + data(:,4).^2);
+figure(2)
+plot(data(:,1), r, 'k-')
+xlabel('$t$ [s]')
+ylabel('$r$ [m]')
