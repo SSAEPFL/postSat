@@ -26,10 +26,17 @@ x = x * radius;
 y = y * radius;
 z = z * radius;
 
-figure(1) 
-plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
+figure 
+%plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
 hold on
-plot3(data(:,2),data(:,3),data(:,4), 'k-') % Satellite
+ 
+%plot3(data(:,2),data(:,3),data(:,4), 'k-') % Satellite
+plot3(data(end,2),data(end,3),data(end,4), 'rx') % Satellite
+plot3(data(1,2),data(1,3),data(1,4), 'bx') % Satellite
+plot3(data(:,11),data(:,12),data(:,13), 'b-')
+%plot3(data(i,2),data(i,3),data(i,4), 'k-') % Satellite
+%plot3(data(i,8),data(i,9),data(i,10), 'bo') %MOon
+
 surf(x,y,z) % terre
 hold off
 xlabel('x')
@@ -37,7 +44,7 @@ ylabel('y')
 zlabel('z')
 
 r = sqrt(data(:,2).^2 + data(:,3).^2 + data(:,4).^2);
-figure(2)
+figure
 plot(data(:,1), r, 'k-')
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
