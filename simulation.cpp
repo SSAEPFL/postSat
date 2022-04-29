@@ -3,6 +3,8 @@
 #include <cmath>          // librerie mathematique de base
 #include <iomanip>        // input output manipulators
 #include <valarray>       // valarray functions
+#include <iterator>
+#include <vector>
 #include "ConfigFile.h" // Il contient les methodes pour lire inputs et ecrire outputs
                           // Fichier .tpp car inclut fonctions template
 #include<stdio.h>
@@ -155,6 +157,7 @@ private:
   const double masse_soleil =1.988435e30 ;
   const double masse_lune = 7.3459e22;
   const double masse_terre = 5.97e24;
+  const double rayon_terre = 6371.009;
   const double celeritas =  299792458;
   // definition des variables
   double tfin=0.e0;      // Temps final
@@ -218,6 +221,9 @@ valarray<double> distance(int j, valarray<double> const& x_,valarray<double> x1_
   return diff;
 }
 
+double altitude() const{
+	return norm2(distance(3,x,x1))-rayon_terre;
+}
 valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<double> const& x1_) const {
   valarray<double> force= valarray<double>(0.e0,3);
   
@@ -252,22 +258,51 @@ return force;
 }
 
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
-	// Force de frottement atmosphérique pour des satellites entre 100km et 1000km d'altitude
+	// Force de frottement atmosphérique pour des satellites
 	// x_ : Position du satellite (taille 6, 3 pos + 3 vit), x1_ : Positions des astres (taille 12, 3*4 pos)
 	/*valarray<double> e_v = valarray<double>(0.e0,3); // Vecteur vitesse normalisé du satellite
-	Valarray<double omega_T = valarray<double(0.e0,3); // Vecteur vitesse angulaire terrestre
+	Valarray<double omega_T = valarray<double(0.e0,3); // Vecteur vitesse angulaire terrestre. ATTENTION! Axe z le long de l'axe de rotation de la Terre (En fait c'est bien)
 	omega_T[0] = 0;
 	omega_T[1] = 0;
 	omega_T[2] = 0.7292*10^(-4); // rad/s
 	valarray<double> v_r = valarray<double>(0.e0,3); // Vecteur vitesse relative du satellite par rapport à celle de l'atmosphère
 	v_r = x_[slice(3,3,1)] - vectorProduct(omega_T,x_[slice(0,3,1)]);
-	force = -0.5*C_d*A_drag*rho*v_r^2*e_v;*/
+	force = -0.5*C_d*A_drag*rho(x_,x1_)*v_r^2*e_v;*/
 	valarray<double> force= valarray<double>(0.e0,3);
 	return force;
 	/*TO DO :
 	 * Implémenter rho, C_d, A_drag, e_v*/
 }
-
+double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n) const {
+	// Implémentation du modèle Harris-Priester pour décrire la pression atmosphérique entre 100km et 1000km d'altitude.
+	// Arguments: Position du soleil, Vecteur position, type d'orbite: n=2 pour des orbites proches de l'équateur et n=6 pour des orbites polaires
+	ifstream is("Harris_Priester_tab.txt");
+	istream_iterator<double> start(is), end;
+	vector<double> numbers(start, end); // Liste des coefficients (0 mod 3 -> altitude, 1 mod 3 -> rho_m , 2 mod 3 -> rho_M)
+	is.close();
+	valarray<double> coeff(numbers.size()); // Conversion d'un vector en valarray
+	for(size_t i(0); i < coeff.size();i++){
+			coeff[i] = numbers[i];
+		}
+	size_t N = coeff.size()/3;
+		// Réorganisation en 3 valarray
+	valarray<double> h_ = coeff[slice(0,N,3)]; 
+	valarray<double> rho_m = coeff[slice(1,N,3)];
+	valarray<double> rho_M = coeff[slice(2,N,3)];
+	size_t i = 0;
+	double h = altitude();
+	if(h <= 1000){
+		while (h_[i+1] <= h){ // Erreur si le satellite va plus haut que 1000 km
+			i++;
+		}
+	}else{return 0;}
+	double H_m = (h_[i] - h_[i+1])/(log(rho_m[i+1]/rho_m[i]));
+	double H_M = (h_[i] - h_[i+1])/(log(rho_M[i+1]/rho_M[i]));
+	double rho_m_h = rho_m[i]*exp((h_[i]-h)/H_m);
+	double rho_M_h = rho_M[i]*exp((h_[i]-h)/H_M);
+	double cos_psi = 1; // A MODIFIER
+	return rho_m_h + (rho_M_h - rho_m_h)*pow(cos_psi,n);
+ }
 valarray<double> ForceSolaire(valarray<double> const& x_,valarray<double> const& x1_) const {
 
 valarray<double> force= valarray<double>(0.e0,3);
