@@ -301,6 +301,8 @@ double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n)
 	double H_M = (h_[i] - h_[i+1])/(log(rho_M[i+1]/rho_M[i]));
 	double rho_m_h = rho_m[i]*exp((h_[i]-h)/H_m);
 	double rho_M_h = rho_M[i]*exp((h_[i]-h)/H_M);
+	valarray<double> e_r = distance(3,x_,x1_)/norm2(distance(3,x_,x1_)); // Vecteur position du satellite normalisé
+	valarray<double> e_b = x
 	double cos_psi = 1; // A MODIFIER
 	return rho_m_h + (rho_M_h - rho_m_h)*pow(cos_psi,n);
  }
