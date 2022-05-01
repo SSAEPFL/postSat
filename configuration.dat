@@ -8,6 +8,7 @@ minute=54
 second=1
 mass1   = 4.2e5  % mass du corps 2[kg] Satellite
 Area = 4 ;% aire face au soleil en m^2
+C_d = 2 % Coefficient de trainé (sans dimension) Approx: 2
 x01     = 6799.61e3        % position initiale en x [m] corps 1
 y01     = 0.e1        % position initiale en y [m] corps  1
 z01     = 0.e1        % position initiale en z [m] corps 1

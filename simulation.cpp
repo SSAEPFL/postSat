@@ -194,6 +194,7 @@ int day,month,year,hour,minute;
 double second;
 const double astronomical_unit= 1.496e11;
 double area; // Aire du satellite recevant la lumière du soleil
+double C_d; // Coefficient de frottement (Drag coefficient)
 valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
 // donnes internes
   double t,dt,tol;        // Temps courant pas de temps
@@ -261,18 +262,21 @@ return force;
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
 	// Force de frottement atmosphérique pour des satellites
 	// x_ : Position du satellite (taille 6, 3 pos + 3 vit), x1_ : Positions des astres (taille 12, 3*4 pos)
-	/*valarray<double> e_v = valarray<double>(0.e0,3); // Vecteur vitesse normalisé du satellite
-	Valarray<double omega_T = valarray<double(0.e0,3); // Vecteur vitesse angulaire terrestre. ATTENTION! Axe z le long de l'axe de rotation de la Terre (En fait c'est bien)
+	valarray<double> e_v(3);  // Vecteur vitesse normalisé du satellite
+	valarray<double> x_vect = x_[slice(0,3,1)];
+	valarray<double> v_vect = x_[slice(3,3,1)];
+	double v = norm2(v_vect);
+	e_v = v_vect/v;
+	valarray<double> omega_T(3); // Vecteur vitesse angulaire terrestre. ATTENTION! Axe z le long de l'axe de rotation de la Terre (En fait c'est bien)
 	omega_T[0] = 0;
 	omega_T[1] = 0;
-	omega_T[2] = 0.7292*10^(-4); // rad/s
+	omega_T[2] = 0.7292e-4; // rad/s
 	valarray<double> v_r = valarray<double>(0.e0,3); // Vecteur vitesse relative du satellite par rapport à celle de l'atmosphère
-	v_r = x_[slice(3,3,1)] - vectorProduct(omega_T,x_[slice(0,3,1)]);
-	force = -0.5*C_d*A_drag*rho(x_,x1_)*v_r^2*e_v;*/
-	valarray<double> force= valarray<double>(0.e0,3);
+	v_r = v_vect - vectorProduct(omega_T,x_vect);
+	valarray<double> force =-0.5*C_d*area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
 	return force;
 	/*TO DO :
-	 * Implémenter rho, C_d, A_drag, e_v*/
+	 * Implémenter  C_d, A_drag*/
 }
 double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n) const {
 	// Implémentation du modèle Harris-Priester pour décrire la pression atmosphérique entre 100km et 1000km d'altitude.
@@ -301,9 +305,24 @@ double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n)
 	double H_M = (h_[i] - h_[i+1])/(log(rho_M[i+1]/rho_M[i]));
 	double rho_m_h = rho_m[i]*exp((h_[i]-h)/H_m);
 	double rho_M_h = rho_M[i]*exp((h_[i]-h)/H_M);
-	valarray<double> e_r = distance(3,x_,x1_)/norm2(distance(3,x_,x1_)); // Vecteur position du satellite normalisé
-	valarray<double> e_b = x
-	double cos_psi = 1; // A MODIFIER
+	
+	valarray<double> e_r = distance(3,x_,x1_)/norm2(distance(3,x_,x1_)); // Vecteur position Terre->Satellite normalisé
+	valarray<double> r_T_S = x1_[slice(0,3,1)]; // Vecteur position Terre->Soleil
+	valarray<double> e_r_sol = r_T_S/norm2(r_T_S);
+	
+	/*Valeurs des cosinus et sinus de la position du soleil
+	 * cos_dec_cos_asc = r_T_S[0];
+	cos_dec_sin_asc = r_T_S[1];
+	sin_dec = r_T_S[2];*/
+	
+	double lambda = 30*3.1415926535897932384626433832795028841971/180.0;
+	
+	valarray<double> e_b(3);
+	e_b[0] = r_T_S[0] * cos(lambda) - r_T_S[1] * sin(lambda);
+	e_b[1] = r_T_S[1] * cos(lambda) - r_T_S[0] * sin(lambda);
+	e_b[2] = r_T_S[2];
+	
+	double cos_psi = sqrt(0.5*(1 + scalarProduct(e_r,e_b))); // A MODIFIER
 	return rho_m_h + (rho_M_h - rho_m_h)*pow(cos_psi,n);
  }
 valarray<double> ForceSolaire(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -428,6 +447,7 @@ public:
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
     area   = configFile.get<double>("Area");		 // lire composante de l'aire
+    C_d = configFile.get<double>("C_d");             // lire le drag coefficient
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
     year = configFile.get<double>("year"); // Lire l'heure de la détection
