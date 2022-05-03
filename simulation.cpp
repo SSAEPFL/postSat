@@ -77,7 +77,7 @@ if (second < 0){
     }
   }
 
-  while(second >= 60){
+  /*while(second >= 60){
     second -= 60;
     minute += 1;
   }
@@ -92,13 +92,13 @@ if (second < 0){
     heure -= 24;
     day += 1;
 
-  }
-/*  minute += int(second) / 60;
+  }*/
+  minute += int(second) / 60;
   second = int(second) % 60 + (second - int(second));
   heure += minute / 60;
   minute = minute % 60;
   day += heure / 24;
-*/
+
   chgmtmonth(day,month, year, heure,minute,second);
 
 }
