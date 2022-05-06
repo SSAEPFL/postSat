@@ -1,18 +1,18 @@
 % Parametres physiques :
-tfin   = 55792552 % temps total maximal de simulation [s] 3.155814954e7
-day=20
+tfin   = 10000 % temps total maximal de simulation [s] 3.155814954e7 5579.2552
+day=27
 month=4
 year=2022
-hour=14
-minute=54
+hour=20
+minute=28
 second=1
 mass1   = 4.2e5  % mass du corps 2[kg] Satellite
 Area = 4 ;% aire face au soleil en m^2
-x01     = 6799.61e3        % position initiale en x [m] corps 1
-y01     = 0.e1        % position initiale en y [m] corps  1
-z01     = 0.e1        % position initiale en z [m] corps 1
-vx01    = 0.e0       % vitesse initiale en x [m/s] corps 1
-vy01    =  7654        % vitesse initiale en y [m/s] corps 1
+x01     =  6.795309e6     % position initiale en x [m] corps 1
+y01     =0        % position initiale en y [m] corps  1
+z01     =0     % position initiale en z [m] corps 1
+vx01    =   0e0   % vitesse initiale en x [m/s] corps 1
+vy01    =  7676      % vitesse initiale en y [m/s] corps 1
 vz01    =  0.e0       % vitesse initiale en z [m/s] corps 1
 % Parametres numeriques :
 nsteps   =557925   % nombre de pas de temps maximal (dt=tfin/nsteps)
