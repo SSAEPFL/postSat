@@ -79,7 +79,7 @@ if (second < 0){
     }
   }
 
-  /*while(second >= 60){
+  while(second >= 60){
     second -= 60;
     minute += 1;
   }
@@ -94,12 +94,12 @@ if (second < 0){
     heure -= 24;
     day += 1;
 
-  }*/
-  minute += int(second) / 60;
+  }
+  /*minute += int(second) / 60;
   second = int(second) % 60 + (second - int(second));
   heure += minute / 60;
   minute = minute % 60;
-  day += heure / 24;
+  day += heure / 24;*/
 
   chgmtmonth(day,month, year, heure,minute,second);
 
@@ -157,7 +157,7 @@ private:
   const double masse_soleil =1.988435e30 ;
   const double masse_lune = 7.3459e22;
   const double masse_terre = 5.97e24;
-  const double rayon_terre = 6371.009;
+  const double rayon_terre = 6371009;
   const double celeritas =  299792458;
   // definition des variables
   double tfin=0.e0;      // Temps final
@@ -274,9 +274,12 @@ valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> con
 	valarray<double> v_r = valarray<double>(0.e0,3); // Vecteur vitesse relative du satellite par rapport à celle de l'atmosphère
 	v_r = v_vect - vectorProduct(omega_T,x_vect);
 	valarray<double> force =-0.5*C_d*area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
+	//cout << e_v[0] << ' '  << e_v[1] << ' ' << e_v[2] <<endl;
+	//cout << force[0] << ' '  << force[1] << ' ' << force[2] <<endl;
+	//cout << norm2(force) << endl;
+	//cout << pow(norm2(v_r),2)<< endl;
+	//cout << rho(x_,x1_,6) << endl;
 	return force;
-	/*TO DO :
-	 * Implémenter  C_d, A_drag*/
 }
 double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n) const {
 	// Implémentation du modèle Harris-Priester pour décrire la pression atmosphérique entre 100km et 1000km d'altitude.
@@ -289,6 +292,10 @@ double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n)
 	for(size_t i(0); i < coeff.size();i++){
 			coeff[i] = numbers[i];
 		}
+	/*for(size_t i(0); i < coeff.size();i++){
+			cout << coeff[i] << ' ';
+		}
+	cout << endl << endl;*/
 	size_t N = coeff.size()/3;
 		// Réorganisation en 3 valarray
 	valarray<double> h_ = coeff[slice(0,N,3)]; 
@@ -296,15 +303,16 @@ double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n)
 	valarray<double> rho_M = coeff[slice(2,N,3)];
 	size_t i = 0;
 	double h = altitude();
-	if(h <= 1000){
-		while (h_[i+1] <= h){ // Erreur si le satellite va plus haut que 1000 km
+	if(h <= 1000.e3){
+		while (h_[i+1]*1000. <= h){ 
 			i++;
 		}
 	}else{return 0;}
 	double H_m = (h_[i] - h_[i+1])/(log(rho_m[i+1]/rho_m[i]));
 	double H_M = (h_[i] - h_[i+1])/(log(rho_M[i+1]/rho_M[i]));
-	double rho_m_h = rho_m[i]*exp((h_[i]-h)/H_m);
-	double rho_M_h = rho_M[i]*exp((h_[i]-h)/H_M);
+	double rho_m_h = rho_m[i]*exp((h_[i]-h/1000.)/H_m);
+	double rho_M_h = rho_M[i]*exp((h_[i]-h/1000.)/H_M);
+	//cout << H_m << ' '  << H_M << ' ' <<  rho_m[i] <<  ' '  << rho_M[i] << ' ' << rho_m_h << ' ' << rho_M_h << endl;
 	
 	valarray<double> e_r = distance(3,x_,x1_)/norm2(distance(3,x_,x1_)); // Vecteur position Terre->Satellite normalisé
 	valarray<double> r_T_S = x1_[slice(0,3,1)]; // Vecteur position Terre->Soleil
@@ -318,12 +326,13 @@ double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n)
 	double lambda = 30*3.1415926535897932384626433832795028841971/180.0;
 	
 	valarray<double> e_b(3);
-	e_b[0] = r_T_S[0] * cos(lambda) - r_T_S[1] * sin(lambda);
-	e_b[1] = r_T_S[1] * cos(lambda) - r_T_S[0] * sin(lambda);
-	e_b[2] = r_T_S[2];
-	
-	double cos_psi = sqrt(0.5*(1 + scalarProduct(e_r,e_b))); // A MODIFIER
-	return rho_m_h + (rho_M_h - rho_m_h)*pow(cos_psi,n);
+	e_b[0] = e_r_sol[0] * cos(lambda) - e_r_sol[1] * sin(lambda);
+	e_b[1] = e_r_sol[1] * cos(lambda) + e_r_sol[0] * sin(lambda);
+	e_b[2] = e_r_sol[2];
+	double cos_psi = sqrt(0.5*(1 + scalarProduct(e_r,e_b))); 
+	//cout << rho_m_h + (rho_M_h - rho_m_h)*pow(cos_psi,n) << endl;
+	double rho = (rho_m_h + (rho_M_h - rho_m_h)*pow(cos_psi,n))*1.e-12;
+	return rho;
  }
 valarray<double> ForceSolaire(valarray<double> const& x_,valarray<double> const& x1_) const {
 
@@ -358,7 +367,7 @@ valarray<double> ForceCoriolis(valarray<double> const& x_,valarray<double> const
   valarray<double> resultante = valarray<double>(0.e0, 3);
  resultante = vectorProduct(ez, vitesser);
 
-  return -2*resultante;
+  return -2.*resultante;
 }
 
 valarray<double> ForceCentrifuge(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
@@ -413,7 +422,10 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
 */
 
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
-accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+accelere = ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_);
+
+
   return accelere;
 }
 
