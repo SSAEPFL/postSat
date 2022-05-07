@@ -79,7 +79,7 @@ if (second < 0){
     }
   }
 
-  /*while(second >= 60){
+  while(second >= 60){
     second -= 60;
     minute += 1;
   }
@@ -94,13 +94,13 @@ if (second < 0){
     heure -= 24;
     day += 1;
 
-  }*/
-  minute += int(second) / 60;
+  }
+  /*minute += int(second) / 60;
   second = int(second) % 60 + (second - int(second));
   heure += minute / 60;
   minute = minute % 60;
   day += heure / 24;
-
+*/
   chgmtmonth(day,month, year, heure,minute,second);
 
 }
@@ -132,7 +132,8 @@ double deg2rad = 3.1415926535897932384626433832795028841971/180.0; // Conversion
 valarray<double> continuationRADEC(double dt_,int day, int month, int year, int heure,int minute, double second  ){
 chgmtemps(day,month,year,heure,minute,second);
 SolarSystemObject Soleil_avant= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, heure, minute, second);
-  second += 50.0;
+  minute += 1;
+
   chgmtemps(day,month,year,heure,minute,second);
   SolarSystemObject Soleil_apres=Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, heure, minute, second);
   valarray<double> continu = valarray<double>(3);
@@ -226,12 +227,15 @@ double altitude() const{
 	return norm2(distance(3,x,x1))-rayon_terre;
 }
 valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<double> const& x1_) const {
-  valarray<double> force= valarray<double>(0.e0,3);
+  valarray<double> force= valarray<double>(1.e0,3);
 
-  force = -G*masse_soleil/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)));
-  force[0] = force[0] * (x_[0]-x1_[0]);
-  force[1] = force[1] * (x_[1]-x1_[1]);
-  force[2] = force[2] * (x_[2]-x1_[2]);
+  force *= -G*masse_soleil;
+
+  valarray<double> soleil= x1_[slice(0,3,1)];
+  double norme3 = norm2(soleil)*norm2(soleil)*norm2(soleil);
+  force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
+  force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[1]/(norme3));
+  force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[2]/(norme3));
 
   return force;
 }
@@ -240,10 +244,15 @@ valarray<double> ForceGravitationLune(valarray<double> const& x_,valarray<double
 
   valarray<double> force= valarray<double>(0.e0,3);
 /*
+valarray<double> lune = x1_[slice(3,3,1)];
+double norme3 = norm2(lune)*norm2(lune)*norm2(lune);
   force = -G*masse_lune/(norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_))*norm2(distance(2,x_,x1_)));
   force[0] = force[0] * (x_[0]-x1_[3]);
   force[1] = force[1] * (x_[1]-x1_[4]);
   force[2] = force[2] * (x_[2]-x1_[5]);
+  force[0] += G*masse_lune*x1_[3]/norme3;
+  force[1] += G*masse_lune*x1_[4]/norme3;
+  force[2] += G*masse_lune*x1_[5]/norme3);
 */
     return force;
 }
@@ -273,7 +282,8 @@ valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> con
 	omega_T[2] = 0.7292e-4; // rad/s
 	valarray<double> v_r = valarray<double>(0.e0,3); // Vecteur vitesse relative du satellite par rapport à celle de l'atmosphère
 	v_r = v_vect - vectorProduct(omega_T,x_vect);
-	valarray<double> force =-0.5*C_d*area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
+	//valarray<double> force =-0.5*C_d*area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
+  valarray<double> force = valarray<double>(0.e0,3);
 	return force;
 	/*TO DO :
 	 * Implémenter  C_d, A_drag*/
@@ -291,7 +301,7 @@ double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n)
 		}
 	size_t N = coeff.size()/3;
 		// Réorganisation en 3 valarray
-	valarray<double> h_ = coeff[slice(0,N,3)]; 
+	valarray<double> h_ = coeff[slice(0,N,3)];
 	valarray<double> rho_m = coeff[slice(1,N,3)];
 	valarray<double> rho_M = coeff[slice(2,N,3)];
 	size_t i = 0;
@@ -305,23 +315,23 @@ double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n)
 	double H_M = (h_[i] - h_[i+1])/(log(rho_M[i+1]/rho_M[i]));
 	double rho_m_h = rho_m[i]*exp((h_[i]-h)/H_m);
 	double rho_M_h = rho_M[i]*exp((h_[i]-h)/H_M);
-	
+
 	valarray<double> e_r = distance(3,x_,x1_)/norm2(distance(3,x_,x1_)); // Vecteur position Terre->Satellite normalisé
 	valarray<double> r_T_S = x1_[slice(0,3,1)]; // Vecteur position Terre->Soleil
 	valarray<double> e_r_sol = r_T_S/norm2(r_T_S);
-	
+
 	/*Valeurs des cosinus et sinus de la position du soleil
 	 * cos_dec_cos_asc = r_T_S[0];
 	cos_dec_sin_asc = r_T_S[1];
 	sin_dec = r_T_S[2];*/
-	
+
 	double lambda = 30*3.1415926535897932384626433832795028841971/180.0;
-	
+
 	valarray<double> e_b(3);
 	e_b[0] = r_T_S[0] * cos(lambda) - r_T_S[1] * sin(lambda);
 	e_b[1] = r_T_S[1] * cos(lambda) - r_T_S[0] * sin(lambda);
 	e_b[2] = r_T_S[2];
-	
+
 	double cos_psi = sqrt(0.5*(1 + scalarProduct(e_r,e_b))); // A MODIFIER
 	return rho_m_h + (rho_M_h - rho_m_h)*pow(cos_psi,n);
  }
@@ -344,8 +354,9 @@ return force;
 valarray<double> ForceCoriolis(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
 
   valarray<double> vitesse_terre = valarray<double>(0.e0,3);
-  vitesse_terre = (continuationRADEC(dt_, jour, mois, annee, heure, minute, second) - x1_[slice(0, 3, 1)])/ dt_;
-
+  SolarSystemObject Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
+  //vitesse_terre = (continuationRADEC(dt_, jour, mois, annee, heure, minute, second) - x1_[slice(0, 3, 1)])/ dt_;
+vitesse_terre = (equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)- x1_[slice(0, 3, 1)])/ dt_;
   valarray<double> vitesser = x_[slice(3,3,1)];
 
   // -2m \omega x vitessesatellite
@@ -353,12 +364,12 @@ valarray<double> ForceCoriolis(valarray<double> const& x_,valarray<double> const
  double vitesseangulaire = norm2(vitesse_terre)/distance;
  //double vitesseangulaire = 1;
   valarray<double> ez = valarray<double>(0.e0,3);
-//  ez[2] = 29800*vitesseangulaire;
+  ez[2] = vitesseangulaire;
 //ez[2] /= distance;
   valarray<double> resultante = valarray<double>(0.e0, 3);
  resultante = vectorProduct(ez, vitesser);
 
-  return -2*resultante;
+  return -2.0*resultante;
 }
 
 valarray<double> ForceCentrifuge(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
@@ -370,7 +381,8 @@ valarray<double> ForceCentrifuge(valarray<double> const& x_,valarray<double> con
   valarray<double> resultante = valarray<double>(0.e0,3);
 
   position = x_[slice(0,3,1)];
-  vect_der = (continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_) - x1_[slice(0,3,1)]) / dt_;
+  //vect_der = (continuationRADEC(dt_,jour, mois, annee, heure, minute,second+dt_) - x1_[slice(0,3,1)]) / dt_;
+  vect_der = (equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)- x1_[slice(0, 3, 1)])/ dt_;
 
   // -2m \omega x vitessesatellite
   double distance = sqrt(x1_[0]*x1_[0] + x1_[1]*x1_[1]+x1_[2]*x1_[2]);
@@ -412,8 +424,9 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
-accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+
   return accelere;
 }
 
@@ -587,6 +600,7 @@ public:
     x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0];		 // lire composante x position Lune
     x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1];	 // lire composante y position Lune
     x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2];		 // lire composante z position Lune
+
 //
 /*
     // Tentative avec Euler-Chromer
@@ -689,12 +703,12 @@ valarray<double> avant = x1_;
     chgmtemps(day,  month,  year,  hour, minute, second );
     Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second);
-    x1_[6]    = 0.0;		 // lire composante x position Soleil
+    x1_[6]    = 0.0;		 // lire composante x position
     x1_[7]    = 0.0;		 // lire composante y position
     x1_[8]    = 0.0;		 // lire composante z position
-    x1_[0]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps Terre
-    x1_[1]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps Terre
-    x1_[2]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps Terre
+    x1_[0]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[0];		 // lire composante x position  Corps
+    x1_[1]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[1];		 // lire composante y position  Corps
+    x1_[2]    = equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)[2];		 // lire composante z position  Corps
     x1_[3]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[0] ;		 // lire composante x position Lune
     x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1] ;	 // lire composante y position Lune
     x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2] ;

@@ -29,7 +29,7 @@ z = z * radius;
 figure 
 %plot3(data(:,5),data(:,6),data(:,7),'rx') % Terre
 hold on
- 
+ plot3(data(:,11),data(:,12),data(:,13),'r-')
 plot3(data(:,2),data(:,3),data(:,4), 'k-') % Satellite
 plot3(data(end,2),data(end,3),data(end,4), 'rx') % Satellite
 plot3(data(1,2),data(1,3),data(1,4), 'bx') % Satellite
