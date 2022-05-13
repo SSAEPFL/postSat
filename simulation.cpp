@@ -150,7 +150,19 @@ SolarSystemObject Soleil_avant= Ephemeris::solarSystemObjectAtDateAndTime(Sun, d
 */
 class Engine
 {
-
+/*ifstream is("Harris_Priester_tab.txt");
+	istream_iterator<double> start(is), end;
+	vector<double> numbers(start, end); // Liste des coefficients (0 mod 3 -> altitude, 1 mod 3 -> rho_m , 2 mod 3 -> rho_M)
+	is.close();
+	valarray<double> coeff(numbers.size()); // Conversion d'un vector en valarray
+	for(size_t i(0); i < coeff.size();i++){
+			coeff[i] = numbers[i];
+		}
+	size_t N = coeff.size()/3;
+		// Réorganisation en 3 valarray
+	valarray<double> h_ = coeff[slice(0,N,3)];
+	valarray<double> rho_m = coeff[slice(1,N,3)];
+	valarray<double> rho_M = coeff[slice(2,N,3)];*/
 private:
   // definition des constantes
   const double pi=3.1415926535897932384626433832795028841971e0;
@@ -170,7 +182,11 @@ private:
   unsigned int sampling=1; // Nombre de pas de temps entre chaque ecriture des diagnostics
   unsigned int last;       // Nombre de pas de temps depuis la derniere ecriture des diagnostics
   ofstream *outputFile;    // Pointeur vers le fichier de sortie
-
+  // Coefficient pour la densité atmosphérique (Harris-Priester)
+  valarray<double> h_ = valarray<double>(0.,50);
+  valarray<double> rho_m = valarray<double>(0.,50);
+  valarray<double> rho_M = valarray<double>(0.,50);
+  
   void printOut(bool write)
   {
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
@@ -288,28 +304,12 @@ valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> con
 	//cout << norm2(force) << endl;
 	//cout << pow(norm2(v_r),2)<< endl;
 	//cout << rho(x_,x1_,6) << endl;
+	//cout << norm2(force) << endl;
 	return force;
 }
 double rho(valarray<double> const& x_, valarray<double> const& x1_,int const& n) const {
 	// Implémentation du modèle Harris-Priester pour décrire la pression atmosphérique entre 100km et 1000km d'altitude.
-	// Arguments: Position du soleil, Vecteur position, type d'orbite: n=2 pour des orbites proches de l'équateur et n=6 pour des orbites polaires
-	ifstream is("Harris_Priester_tab.txt");
-	istream_iterator<double> start(is), end;
-	vector<double> numbers(start, end); // Liste des coefficients (0 mod 3 -> altitude, 1 mod 3 -> rho_m , 2 mod 3 -> rho_M)
-	is.close();
-	valarray<double> coeff(numbers.size()); // Conversion d'un vector en valarray
-	for(size_t i(0); i < coeff.size();i++){
-			coeff[i] = numbers[i];
-		}
-	/*for(size_t i(0); i < coeff.size();i++){
-			cout << coeff[i] << ' ';
-		}
-	cout << endl << endl;*/
-	size_t N = coeff.size()/3;
-		// Réorganisation en 3 valarray
-	valarray<double> h_ = coeff[slice(0,N,3)];
-	valarray<double> rho_m = coeff[slice(1,N,3)];
-	valarray<double> rho_M = coeff[slice(2,N,3)];
+	//cout << "lol" << endl;
 	size_t i = 0;
 	double h = altitude();
 	if(h <= 1000.e3){
@@ -432,9 +432,10 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
-accelere = ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_);
+//accelere = ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_);
 
 
   return accelere;
@@ -484,8 +485,22 @@ public:
     dt = tfin / nsteps;          // calculer le time step
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
-*/
-
+*/	
+	// Création de la table de coefficients pour rho (H-P)
+	ifstream is("Harris_Priester_tab.txt");
+	istream_iterator<double> start(is), end;
+	vector<double> numbers(start, end); // Liste des coefficients (0 mod 3 -> altitude, 1 mod 3 -> rho_m , 2 mod 3 -> rho_M)
+	is.close();
+	valarray<double> coeff(numbers.size()); // Conversion d'un vector en valarray
+	for(size_t i(0); i < coeff.size();i++){
+			coeff[i] = numbers[i];
+		}
+	size_t N = coeff.size()/3;
+		// Réorganisation en 3 valarray
+	h_ = coeff[slice(0,N,3)];
+	rho_m = coeff[slice(1,N,3)];
+	rho_M = coeff[slice(2,N,3)];
+	
     // Ouverture du fichier de sortie
     outputFile = new ofstream(configFile.get<string>("output").c_str());
     outputFile->precision(15); // Les nombres seront ecrits avec 15 decimales
