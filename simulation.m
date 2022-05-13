@@ -87,6 +87,7 @@ hold on
 %plot(data(:,1),6.371009e6*ones(size(data(:,1))),'r--')
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
+<<<<<<< HEAD
 legend('Moons gravit. force', 'Earth radius')
 
 figure 
@@ -104,3 +105,5 @@ figure
 plot(data(:,1), r, 'k-')
 hold on
 plot(data2(:,1),r_total, 'r.-')
+=======
+>>>>>>> 43767affbeab3b440be841a92ed0c11e59c90a59
