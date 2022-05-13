@@ -281,7 +281,17 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
   force[1] = force[1] * (x1_[7] - x_[1]);
   force[2] = force[2] * (x1_[8] - x_[2]);
 
-return force;
+	return force;
+}
+
+valarray<double> geopotential(valarray<double> const& x_, valarray<double> const& x1_, size_t n) const {
+	for(size_t i(0); i < n ; i++){
+		for(size_t j(0); j < i ; j++){
+			
+		}}
+	valarray<double> force = valarray<double> (0.e0,3);
+	return force;
+	
 }
 
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -440,6 +450,8 @@ accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGra
 
   return accelere;
 }
+
+
 
 public:
 
