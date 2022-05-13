@@ -21,8 +21,8 @@ fichier = 'output.out';
 % tfin =5579.27;
 % dt = [0.01,0.1,0.5,1,2, 4, 5,8,10,16,20,40,71,80,142,284,355,568,710,1136,1420,2840,5680];
 % nsteps = tfin./dt;
-vitesse = linspace(7000,8000,100);
-% nsimul = length(nsteps); % Nombre de simulations a faire
+vitesse = linspace(7657.297,7657.3,100);
+ nsimul = length(vitesse); % Nombre de simulations a faire
 % paramstr = 'nsteps'; % Nom du parametre a scanner  MODIFIER SELON VOS BESOINS
 % param = vitesse; % Valeurs du parametre a scanner  MODIFIER SELON VOS BESOINS
 paramstr = 'vy01'; % Nom du parametre a scanner  MODIFIER SELON VOS BESOINS
@@ -41,40 +41,47 @@ param = vitesse; % Valeurs du parametre a scanner  MODIFIER SELON VOS BESOINS
       disp(cmd);
       system(cmd);
  end
-%% JE veux juste voir si la vitesse influence le shooting star
-
+%% JE veux trouver la vitesse optimale
+error = zeros(1,nsimul);
 for i =1:length(vitesse)
-    figure
-    r = sqrt(data(:,2).^2 + data(:,3).^2 + data(:,4).^2);
-figure
-plot(data(:,1), r, 'k-')
-hold on
-plot(data(:,1),6.371009e6*ones(size(data(:,1))),'r--')
-xlabel('$t$ [s]')
-ylabel('$r$ [m]')
+   data = load(output{i});
+%     figure
+     r = sqrt(data(:,2).^2 + data(:,3).^2 + data(:,4).^2);
+% figure
+% plot(data(:,1), r, 'k-')
+% hold on
+% plot(data(:,1),6.371009e6*ones(size(data(:,1))),'r--')
+% xlabel('$t$ [s]')
+% ylabel('$r$ [m]')
+error(i) = max(max(r)) - min(min(r));
 end
+figure 
+plot(vitesse,error,'k-')
+xlabel('vitesse [m/s]')
+ylabel('distance maximum of oscilation [m]')
  
 % %% Analyse %%
 % %%%%%%%%%%%%%
 % % Ici, on aimerait faire une etude de convergence: erreur fonction de dt, sur diagramme log-log.
 % % A MODIFIER ET COMPLETER SELON VOS BESOINS
 % 
-%  error = zeros(1,nsimul);
+  
 %     xfinal = zeros(1,nsimul);
 %     yfinal = zeros(1,nsimul);
 %     zfinal = zeros(1,nsimul);
 % % 
-% for i = 1:nsimul % Parcours des resultats de toutes les simulations
-%     data = load(output{i}); % Chargement du fichier de sortie de la i-ieme simulation
-%    
-%      x_th = data(1,2); % TODO: Entrer la vraie solution analytique a tfin
-%      y_th = data(1,3);
-%      z_th = data(1,4); % TODO: Entrer la vraie solution analytique a tfin
-%     error(i) = sqrt((data(end,2)-x_th).^2+(data(end,3)-y_th).^2+(data(end,4)-z_th).^2); % erreur sur la position finale
-%     xfinal(i) = data(end,2);
-%     yfinal(i) = data(end,3);
-%     zfinal(i) = data(end,4);
-% end
+ for i = 1:nsimul % Parcours des resultats de toutes les simulations
+     %data = load(output{i}); % Chargement du fichier de sortie de la i-ieme simulation
+    
+%       x_th = data(1,2); % TODO: Entrer la vraie solution analytique a tfin
+%       y_th = data(1,3);%     
+%       z_th = data(1,4); % TODO: Entrer la vraie solution analytique a tfin
+%      error(i) = sqrt((data(end,2)-x_th).^2+(data(end,3)-y_th).^2+(data(end,4)-z_th).^2); % erreur sur la position finale
+%      xfinal(i) = data(end,2);
+%      yfinal(i) = data(end,3);
+%      zfinal(i) = data(end,4);
+    
+ end
 % % 
 %  coeff_fitx = polyfit(dt(1:6),xfinal(1:6), 1)
 %   xFitx = linspace(min(dt), max(dt), 100000);
