@@ -119,7 +119,7 @@ valarray<T> const& array2){
 }
 
 valarray<double> equatorialtocartesian(double ascension,\
-double declinaison, double distance){ // Transformation du système equatorial à Cartesien par rapport au point VERNAL
+double declinaison, double distance){ // Transformation du système equatorial à Cartesien (axe X passe par le point VERNAL, axe Z passe par les pôles)
 valarray<double> array3 = valarray<double>(3);
 double hr2rad = 2*3.1415926535897932384626433832795028841971/24.0; // Conversion d'angle en heure -> radians
 double deg2rad = 3.1415926535897932384626433832795028841971/180.0; // Conversion d'angle en degré -> radians
@@ -129,6 +129,19 @@ double deg2rad = 3.1415926535897932384626433832795028841971/180.0; // Conversion
   return array3;
 }
 
+valarray<double> cartesiantoequatorial(double const& x, double const& y, double const& z){ // Transformation de coordonnées cartésiennes en coordonnées equatoriales (axe X passe par le point VERNAL, axe z passe par les pôles)
+	// Données en radian!!!
+	valarray<double> equa = valarray<double>(3);
+	const double pi=3.1415926535897932384626433832795028841971;
+	double r = sqrt(pow(x,2) + pow(y,2) + pow(z,2));
+	equa[0] = r;
+	equa[1] = asin(z/r); // Déclinaison
+	equa[2] = atan(y/x); // Ascension droite
+	if ((x*y > 0 and x < 0) or (x*y < 0 and x < 0) ){
+	equa[2] +=	pi;
+	}
+	return equa;
+}
 valarray<double> continuationRADEC(double dt_,int day, int month, int year, int heure,int minute, double second  ){
 chgmtemps(day,month,year,heure,minute,second);
 SolarSystemObject Soleil_avant= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, heure, minute, second);
@@ -285,14 +298,85 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
 	return force;
 }
 
-valarray<double> geopotential(valarray<double> const& x_, valarray<double> const& x1_, size_t n) const {
-	for(size_t i(0); i < n ; i++){
+double Geopot(valarray<double> const& equatorial, size_t n) const { // Calcul le potentiel terrestre U. Les coordonées sont equatorialees
+	double r = equatorial[0];
+	double phi = equatorial[1];
+	double lambda = equatorial[2];
+	double double_somme(0);
+	/*for(size_t i(0); i < n ; i++){
 		for(size_t j(0); j < i ; j++){
 			
-		}}
-	valarray<double> force = valarray<double> (0.e0,3);
-	return force;
+		}}*/
+	double U = G*masse_terre/r*double_somme;
 	
+	return 0;
+}
+valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_, size_t n) const{
+	
+	valarray<double> x_vect = x_[slice(0,3,1)];
+	valarray<double> eq_vect(3);
+	eq_vect = cartesiantoequatorial(x_vect[0],x_vect[1],x_vect[2]);
+	
+	// Quantités infinitésimales
+	
+	valarray<double> dr(3);
+	dr[0] = 1;
+	dr[1] = 0;
+	dr[2] = 0;
+	
+	valarray<double> dphi(3);
+	dphi[0] = 0;
+	dphi[1] = 2*pi/6.e6;
+	dphi[2] = 0;
+	
+	valarray<double> dlambda(3);
+	dlambda[0] = 0;
+	dlambda[1] = 0;
+	dlambda[2] = 2*pi/6.e6;
+	
+	double U = Geopot(eq_vect,n);
+	
+	// Définition de grandeurs pratiques
+	
+	double x = x_vect[0];
+	double y = x_vect[1];
+	double z = x_vect[2];
+	double r = eq_vect[0];
+	
+	// Dérivées de r 
+	
+	double drdx = x/r;
+	double drdy = y/r;
+	double drdz = z/r;
+	
+	// Dérivées de phi
+	
+	double dphidx = -x/(pow(r,3)*sqrt(1-pow(z/r,2)));
+	double dphidy = -y/(pow(r,3)*sqrt(1-pow(z/r,2)));
+	double dphidz = 2*z/r/sqrt(1-pow(z/r,2))*(1/r - pow(z,2)/pow(r,3));
+	
+	// Dérivées de lambda
+	
+	double dlambdadx = -y/(pow(x,2) + pow(y,2));
+	double dlambdady = x/(pow(x,2) + pow(y,2));
+	double dlambdadz = 0;
+	
+	// Calcul du gradient
+	
+	double dUdr = (Geopot(eq_vect + dr,n)-U)/dr[0];
+	double dUdphi = (Geopot(eq_vect + dphi,n)-U)/dphi[1];
+	double dUdlambda = (Geopot(eq_vect + dlambda,n)-U)/dlambda[2];
+	
+	double dUdx = dUdr*drdx + dUdphi*dphidx + dUdlambda*dlambdadx;
+	double dUdy = dUdr*drdy + dUdphi*dphidy	+ dUdlambda*dlambdady;
+	double dUdz = dUdr*drdz + dUdphi*dphidz + dUdlambda*dlambdadz;
+	
+	valarray<double> r_p_p = valarray<double> (0.e0,3);
+	r_p_p[0] = dUdx;
+	r_p_p[1] = dUdy;
+	r_p_p[2] = dUdz;
+	
+	return r_p_p;
 }
 
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
