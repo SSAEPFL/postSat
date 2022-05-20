@@ -210,7 +210,8 @@ protected:
 int day,month,year,hour,minute;
 double second;
 const double astronomical_unit= 1.496e11;
-double area; // Aire du satellite recevant la lumière du soleil
+double Solar_area; // Aire du satellite recevant la lumière du soleil
+double Drag_area; // Surface de frottement du satellite avec l'atmosphère
 double C_d; // Coefficient de frottement (Drag coefficient)
 valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
 // donnes internes
@@ -309,7 +310,7 @@ valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> con
 	omega_T[2] = 0.7292e-4; // rad/s
 	valarray<double> v_r = valarray<double>(0.e0,3); // Vecteur vitesse relative du satellite par rapport à celle de l'atmosphère
 	v_r = v_vect - vectorProduct(omega_T,x_vect);
-	valarray<double> force =-0.5*C_d*area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
+	valarray<double> force =-0.5*C_d*Drag_area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
 	//cout << e_v[0] << ' '  << e_v[1] << ' ' << e_v[2] <<endl;
 	//cout << force[0] << ' '  << force[1] << ' ' << force[2] <<endl;
 	//cout << norm2(force) << endl;
@@ -362,9 +363,9 @@ valarray<double> force= valarray<double>(0.e0,3);
 // Cst Solar formula : sigma T^4 (R_s/R)^2
 double sigma = 5.670374e-8; double T_s = 5778; double R_s = 6.957e8;
 valarray <double> position = x_[slice(0,3,1)];
-double solarCst = sigma*pow(5778,4)*R_s/norm2(position)*R_s/norm2(position);
+double solarCst = sigma*pow(T_s,4)*R_s/norm2(position)*R_s/norm2(position);
 
-force = solarCst/celeritas * area ;
+force = solarCst/celeritas * Solar_area;
 force[0] = x_[0]/norm2(position);
 force[1] = x_[1]/norm2(position);
 force[2] = x_[2]/norm2(position);
@@ -484,7 +485,8 @@ public:
     x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
-    area   = configFile.get<double>("Area");		 // lire composante de l'aire
+    Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
+    Drag_area = configFile.get<double>("Drag_area"); // lire la surface de frottement
     C_d = configFile.get<double>("C_d");             // lire le drag coefficient
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
