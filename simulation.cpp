@@ -298,19 +298,42 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
 	return force;
 }
 
-double Geopot(valarray<double> const& equatorial, size_t n) const { // Calcul le potentiel terrestre U. Les coordonées sont equatorialees
+double P_norm(unsigned int const& n, unsigned int const& m, double const& x){
+	
+	// Polynome de Legendre associé normalisé
+	
+	double k = 0;
+	
+	if (m == 0){
+		k = 1;
+	}
+	C = sqrt((2-k)*(2*n+1)*tgamma(n-m)/tgamma(n+m))
+	return C*assoc_legendre(n,m,x);
+}
+
+double Geopot(valarray<double> const& equatorial, size_t k) const { 
+	
+	// Calcul le potentiel terrestre U. Les coordonées sont dans le système equatorial
+	// Formules tirées du livre Satellite Orbits (Montenbruck and Gill) p.57-58
+	
 	double r = equatorial[0];
 	double phi = equatorial[1];
 	double lambda = equatorial[2];
+	
 	double double_somme(0);
-	/*for(size_t i(0); i < n ; i++){
-		for(size_t j(0); j < i ; j++){
-			
-		}}*/
+	
+	for(size_t n(0); n < k ; n++){
+		for(size_t j(0); i < n ; i++){
+			double_somme += pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_norm(n,m)*cos(m*lambda)+S_norm*sin(m*lambda));
+		}}
+		
 	double U = G*masse_terre/r*double_somme;
 	
-	return 0;
+	return U;
 }
+/* TODO :
+ * Implémenter P_norm, C_norm et S_norm */
+ 
 valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_, size_t n) const{
 	
 	valarray<double> x_vect = x_[slice(0,3,1)];
