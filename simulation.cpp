@@ -199,6 +199,10 @@ private:
   valarray<double> h_ = valarray<double>(0.,50);
   valarray<double> rho_m = valarray<double>(0.,50);
   valarray<double> rho_M = valarray<double>(0.,50);
+  // Coefficient pour le géopotentiel
+  vector<vector<double>> C_nm;
+  vector<vector<double>> S_nm;
+  unsigned int ordre;
 
   void printOut(bool write)
   {
@@ -298,107 +302,108 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
 	return force;
 }
 
-double P_norm(unsigned int const& n, unsigned int const& m, double const& x){
-	
+double P_norm(size_t const& n, size_t const& m, double const& x)const{
+
 	// Polynome de Legendre associé normalisé
 	
-	double k = 0;
-	
+	/*double k = 0;
+
 	if (m == 0){
 		k = 1;
 	}
-	C = sqrt((2-k)*(2*n+1)*tgamma(n-m)/tgamma(n+m))
-	return C*assoc_legendre(n,m,x);
+	double C = sqrt((2-k)*(2*n+1)*tgamma(n-m)/tgamma(n+m));
+	return C*legendre_p(n,m,x);*/
+	return 1;
 }
 
-double Geopot(valarray<double> const& equatorial, size_t k) const { 
-	
+double Geopot(valarray<double> const& equatorial) const {
+
 	// Calcul le potentiel terrestre U. Les coordonées sont dans le système equatorial
 	// Formules tirées du livre Satellite Orbits (Montenbruck and Gill) p.57-58
-	
+
 	double r = equatorial[0];
 	double phi = equatorial[1];
 	double lambda = equatorial[2];
-	
+
 	double double_somme(0);
-	
-	for(size_t n(0); n < k ; n++){
-		for(size_t j(0); i < n ; i++){
-			double_somme += pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_norm(n,m)*cos(m*lambda)+S_norm*sin(m*lambda));
+
+	for(size_t n(0); n <= ordre ; n++){
+		for(size_t m(0); m <= n ; m++){
+			double_somme += pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
 		}}
-		
+
 	double U = G*masse_terre/r*double_somme;
-	
+
 	return U;
 }
 /* TODO :
  * Implémenter P_norm, C_norm et S_norm */
- 
-valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_, size_t n) const{
-	
+
+valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_) const{
+
 	valarray<double> x_vect = x_[slice(0,3,1)];
 	valarray<double> eq_vect(3);
 	eq_vect = cartesiantoequatorial(x_vect[0],x_vect[1],x_vect[2]);
-	
+
 	// Quantités infinitésimales
-	
+
 	valarray<double> dr(3);
 	dr[0] = 1;
 	dr[1] = 0;
 	dr[2] = 0;
-	
+
 	valarray<double> dphi(3);
 	dphi[0] = 0;
 	dphi[1] = 2*pi/6.e6;
 	dphi[2] = 0;
-	
+
 	valarray<double> dlambda(3);
 	dlambda[0] = 0;
 	dlambda[1] = 0;
 	dlambda[2] = 2*pi/6.e6;
-	
-	double U = Geopot(eq_vect,n);
-	
+
+	double U = Geopot(eq_vect);
+
 	// Définition de grandeurs pratiques
-	
+
 	double x = x_vect[0];
 	double y = x_vect[1];
 	double z = x_vect[2];
 	double r = eq_vect[0];
-	
-	// Dérivées de r 
-	
+
+	// Dérivées de r
+
 	double drdx = x/r;
 	double drdy = y/r;
 	double drdz = z/r;
-	
+
 	// Dérivées de phi
-	
+
 	double dphidx = -x/(pow(r,3)*sqrt(1-pow(z/r,2)));
 	double dphidy = -y/(pow(r,3)*sqrt(1-pow(z/r,2)));
 	double dphidz = 2*z/r/sqrt(1-pow(z/r,2))*(1/r - pow(z,2)/pow(r,3));
-	
+
 	// Dérivées de lambda
-	
+
 	double dlambdadx = -y/(pow(x,2) + pow(y,2));
 	double dlambdady = x/(pow(x,2) + pow(y,2));
 	double dlambdadz = 0;
-	
+
 	// Calcul du gradient
-	
-	double dUdr = (Geopot(eq_vect + dr,n)-U)/dr[0];
-	double dUdphi = (Geopot(eq_vect + dphi,n)-U)/dphi[1];
-	double dUdlambda = (Geopot(eq_vect + dlambda,n)-U)/dlambda[2];
-	
+
+	double dUdr = (Geopot(eq_vect + dr)-U)/dr[0];
+	double dUdphi = (Geopot(eq_vect + dphi)-U)/dphi[1];
+	double dUdlambda = (Geopot(eq_vect + dlambda)-U)/dlambda[2];
+
 	double dUdx = dUdr*drdx + dUdphi*dphidx + dUdlambda*dlambdadx;
 	double dUdy = dUdr*drdy + dUdphi*dphidy	+ dUdlambda*dlambdady;
 	double dUdz = dUdr*drdz + dUdphi*dphidz + dUdlambda*dlambdadz;
-	
+
 	valarray<double> r_p_p = valarray<double> (0.e0,3);
 	r_p_p[0] = dUdx;
 	r_p_p[1] = dUdy;
 	r_p_p[2] = dUdz;
-	
+
 	return r_p_p;
 }
 
@@ -552,7 +557,8 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_);
 
@@ -603,6 +609,7 @@ public:
     second = configFile.get<double>("second"); // Lire l'heure de la détection
     sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
     tol = configFile.get<double>("tol");
+    ordre = configFile.get<unsigned int>("ordre"); 
     dt = tfin / nsteps;          // calculer le time step
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
@@ -621,6 +628,34 @@ public:
 	h_ = coeff[slice(0,N,3)];
 	rho_m = coeff[slice(1,N,3)];
 	rho_M = coeff[slice(2,N,3)];
+
+	// Création des tables de coefficients pour le géopotentiel
+
+	ifstream cs("C_nm.txt");
+	istream_iterator<double> start_c(cs), end_c;
+	vector<double> numbers_c(start_c, end_c);
+	cs.close();
+	size_t n(ordre);
+	vector<vector<double>> tab_C(n+1);
+	for (size_t i(0) ; i <= n; i++){
+		for (size_t j(0) ; j <= i ; j++){
+			tab_C[i].push_back(numbers_c[i*(i+1)/2 + j]);
+			}
+		}
+
+	C_nm = tab_C;
+
+	ifstream ss("S_nm.txt");
+	istream_iterator<double> start_s(ss), end_s;
+	vector<double> numbers_s(start_s, end_s);
+	ss.close();
+	vector<vector<double>> tab_S(n+1);
+	for (size_t i(0) ; i <= n; i++){
+		for (size_t j(0) ; j <= i ; j++){
+			tab_S[i].push_back(numbers_s[i*(i+1)/2 + j]);
+			}
+		}
+	S_nm = tab_S;
 
     // Ouverture du fichier de sortie
     outputFile = new ofstream(configFile.get<string>("output").c_str());

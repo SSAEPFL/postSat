@@ -1,7 +1,7 @@
 
 % Parametres physiques :
 
-tfin   = 3.155814954e7% temps total maximal de simulation [s] 3.155814954e7 5579.2552
+tfin   = 1.e5% temps total maximal de simulation [s] 3.155814954e7 5579.2552
 day=4
 month=3
 hour=14
@@ -10,7 +10,8 @@ minute=14
 second=1
 mass1   = 457735.00  % mass du corps 2[kg] Satellite
 Solar_area = 2500 % aire face au soleil en m^2
-Drag_area = 1477.10 % surface de frottement
+Drag_area = 1477.10 % surface de frottement	
+ordre = 0 % nombre de termes -1 considérés pour calculer le géopotentiel
 C_d = 3.60 % Coefficient de trainé (sans dimension) Approx: 2
 x01     = 6.795309e6       % position initiale en x [m] corps 1 6.795309e6
 y01     = 0.e1        % position initiale en y [m] corps  1
@@ -19,8 +20,8 @@ vx01    = 0.e0       % vitesse initiale en x [m/s] corps 1
 vy01    =  7657        % vitesse initiale en y [m/s] corps 1 7676
 vz01    =  0.e0       % vitesse initiale en z [m/s] corps 1
 % Parametres numeriques :
-nsteps   = 31558149 % nombre de pas de temps maximal (dt=tfin/nsteps) 557925
+nsteps   = 100000 % nombre de pas de temps maximal (dt=tfin/nsteps) 557925
 schema   = RK4  % Schema numerique RK4,SV
 tol     = 0       % tolerance methode Adaptatif
-output   = output.out % nome/adresse du fichier d'output
-sampling = 5579    % nombre de pas de temps entre deux ecritures, no sampling = -1
+output   = output_w_D.out % nome/adresse du fichier d'output
+sampling = 1   % nombre de pas de temps entre deux ecritures, no sampling = -1
