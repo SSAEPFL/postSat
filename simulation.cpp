@@ -330,7 +330,9 @@ double Geopot(valarray<double> const& equatorial) const {
 	for(size_t n(0); n <= ordre ; n++){
 		for(size_t m(0); m <= n ; m++){
 			double_somme += pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
+			//cout << "xd ";
 		}}
+		//cout << endl;
 
 	double U = G*masse_terre/r*double_somme;
 
@@ -348,19 +350,19 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	// Quantités infinitésimales
 
 	valarray<double> dr(3);
-	dr[0] = 1;
+	dr[0] = 5.e-2;
 	dr[1] = 0;
 	dr[2] = 0;
 
 	valarray<double> dphi(3);
 	dphi[0] = 0;
-	dphi[1] = 2*pi/6.e6;
+	dphi[1] = 2*pi/6.e12;
 	dphi[2] = 0;
 
 	valarray<double> dlambda(3);
 	dlambda[0] = 0;
 	dlambda[1] = 0;
-	dlambda[2] = 2*pi/6.e6;
+	dlambda[2] = 2*pi/6.e12;
 
 	double U = Geopot(eq_vect);
 
@@ -403,7 +405,15 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	r_p_p[0] = dUdx;
 	r_p_p[1] = dUdy;
 	r_p_p[2] = dUdz;
-
+	
+	valarray<double> f(3);
+	f = ForceGravitationTerre(x_,x1_);
+	
+	//Pour débuguer
+	
+	//cout << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
+	//cout << r_p_p[0] << ' ' << r_p_p[1] << ' ' << r_p_p[2] << endl;
+	
 	return r_p_p;
 }
 
@@ -639,7 +649,7 @@ public:
 	vector<vector<double>> tab_C(n+1);
 	for (size_t i(0) ; i <= n; i++){
 		for (size_t j(0) ; j <= i ; j++){
-			tab_C[i].push_back(numbers_c[i*(i+1)/2 + j]);
+			tab_C[i].push_back(1.e-6*numbers_c[i*(i+1)/2 + j]);
 			}
 		}
 
@@ -652,7 +662,7 @@ public:
 	vector<vector<double>> tab_S(n+1);
 	for (size_t i(0) ; i <= n; i++){
 		for (size_t j(0) ; j <= i ; j++){
-			tab_S[i].push_back(numbers_s[i*(i+1)/2 + j]);
+			tab_S[i].push_back(1.e-6*numbers_s[i*(i+1)/2 + j]);
 			}
 		}
 	S_nm = tab_S;
@@ -699,7 +709,7 @@ public:
       step(x,x1,dt);  // faire la mise a jour de la simulation
       t+=dt;
       printOut(false); // ecrire pas de temps actuel
-      //cout << t << "\r";
+      cout << t << "\r";
     }
     if (tfin > t){
       dt = tfin-t;

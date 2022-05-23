@@ -1,4 +1,4 @@
-%% Data loading
+cl%% Data loading
 data = load('output.out');
 %% Data loading w_D
 data_w_D = load('output_w_D.out');
