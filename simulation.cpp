@@ -9,6 +9,7 @@
                           // Fichier .tpp car inclut fonctions template
 #include<stdio.h>
 #include "ephemeris/Ephemeris.hpp"
+#include <chrono>
 
 using namespace std; // ouvrir un namespace avec la librairie c++ de base
 
@@ -172,6 +173,7 @@ private:
   const double masse_terre = 5.97e24;
   const double rayon_terre = 6371009;
   const double celeritas =  299792458;
+
   // definition des variables
   double tfin=0.e0;      // Temps final
   unsigned int nsteps=1; // Nombre de pas de temps
@@ -187,19 +189,27 @@ private:
   valarray<double> rho_m = valarray<double>(0.,50);
   valarray<double> rho_M = valarray<double>(0.,50);
 
-  void printOut(bool write)
+  void printOut(bool write,vector< vector<double> > matrix)
   {
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-    *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2]  << " "<<x1[6]<< " "<< x1[7] << " " << x1[8] << " "<< x1[3]<< " "<<x1[4]<<" "<<x1[5]<<" "<<x1[0]<< " "<<x1[1]<<" "<<x1[2]<<" "<<dt<< " "<<endl; // write output on file
+      *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2]  << " "<<dt<< " "<<endl; // write output on file
+
+  /*  matrix[0].pushback(t);
+    matrix[1].pushback(x[0]);
+    matrix[2].pushback(x[1]);
+    matrix[3].pushback(x[2]);
+    matrix[4].pushback(dt);
+    */
       last = 1;
+       // fin +=1;
     }
     else
     {
       last++;
     }
-  }
+    }
 protected:
   // Iteration temporelle, a definir au niveau des classes filles
   virtual void step(valarray<double>&,valarray<double>&, double)=0;
@@ -216,7 +226,6 @@ valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
 // donnes internes
   double t,dt,tol;        // Temps courant pas de temps
   valarray<double> x=valarray<double>(0.e0,6); // Position des astres
-
   template<typename T> valarray<T> heliocentricshift(valarray<double> position)
   {
     valarray<double> shifting = valarray<double>(0.e0,3);
@@ -249,9 +258,13 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
 
   valarray<double> soleil= x1_[slice(0,3,1)];
   double norme3 = norm2(soleil)*norm2(soleil)*norm2(soleil);
-  force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
+  /*force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
   force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[1]/(norme3));
   force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[2]/(norme3));
+*/
+force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
+force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
+force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
 
   return force;
 }
@@ -266,9 +279,9 @@ double norme3 = norm2(lune)*norm2(lune)*norm2(lune);
   force[0] = force[0] * (x_[0]-x1_[3]);
   force[1] = force[1] * (x_[1]-x1_[4]);
   force[2] = force[2] * (x_[2]-x1_[5]);
-  force[0] += G*masse_lune*x1_[3]/norme3;
-  force[1] += G*masse_lune*x1_[4]/norme3;
-  force[2] += G*masse_lune*x1_[5]/norme3;
+  force[0] -= G*masse_lune*x1_[3]/norme3;
+  force[1] -= G*masse_lune*x1_[4]/norme3;
+  force[2] -= G*masse_lune*x1_[5]/norme3;
 
     return force;
 }
@@ -365,8 +378,8 @@ valarray<double> ForceCoriolis(valarray<double> const& x_,valarray<double> const
 
   valarray<double> vitesse_terre = valarray<double>(0.e0,3);
   SolarSystemObject Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
-  vitesse_terre = (continuationRADEC(dt_, jour, mois, annee, heure, minute, second) - x1_[slice(0, 3, 1)])/ dt_;
-//vitesse_terre = (equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)- x1_[slice(0, 3, 1)])/ dt_;
+//  vitesse_terre = (continuationRADEC(dt_, jour, mois, annee, heure, minute, second) - x1_[slice(0, 3, 1)])/ dt_;
+vitesse_terre = (equatorialtocartesian(Soleil.equaCoordinates.ra, Soleil.equaCoordinates.dec, astronomical_unit*Soleil.distance)- x1_[slice(0, 3, 1)])/ dt_;
   valarray<double> vitesser = x_[slice(3,3,1)];
 
   // -2m \omega x vitessesatellite
@@ -434,10 +447,11 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
-//accelere = ForceGravitationTerre(x_,x1_);
-
+//accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass;
+accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationTerre(x_,x1_)+ ForceGravitationSoleil(x_,x1_);
   return accelere;
 }
 
@@ -483,6 +497,7 @@ public:
     sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
     tol = configFile.get<double>("tol");
     dt = tfin / nsteps;          // calculer le time step
+
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
 */
@@ -536,22 +551,24 @@ public:
     x1[5]    = positionLune[2];		 //Lune Héliocentrique
 
     last = 0; // initialise le parametre d'ecriture
-    printOut(true); // ne pas ecrire premier pas de temps
+    vector< vector<double> >  matrix;
+        int compteur = 0;
+    printOut(true,matrix); // ne pas ecrire premier pas de temps
   if (tol == 0){
     while(t < tfin -dt ) // boucle sur tout pas de temps
     {
       step(x,x1,dt);  // faire la mise a jour de la simulation
       t+=dt;
-      printOut(false); // ecrire pas de temps actuel
+      printOut(false,matrix); // ecrire pas de temps actuel
       //cout << t << "\r";
     }
     if (tfin > t){
       dt = tfin-t;
       step(x,x1 ,dt);
       t+=dt;
-      printOut(false);
+      printOut(false,matrix);
     }
-    printOut(true); // ecrire dernier pas de temps
+    printOut(true,matrix); // ecrire dernier pas de temps
   }
   else {
     while(t < tfin -dt ) // boucle sur tout pas de temps
@@ -560,14 +577,15 @@ public:
       step2(dt);  // faire la mise a jour de la simulation
       t+=dt;
 
-      printOut(false); // ecrire pas de temps actuel
+      printOut(false,matrix); // ecrire pas de temps actuel
     }
     if ( tfin > t){
     dt = tfin-t;
     step(x,x1,dt);
     t+=dt;
-    printOut(false);}
-    printOut(true); // ecrire dernier pas de temps
+    printOut(false,matrix);}
+
+    printOut(true,matrix); // ecrire dernier pas de temps
 
   }
 };
@@ -797,6 +815,8 @@ dt = dt_;
 // programme
 int main(int argc, char* argv[])
 {
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  start = std::chrono::system_clock::now();
   string inputPath("configuration.dat"); // Fichier d'input par defaut
   if(argc>1) // Fichier d'input specifie par l'utilisateur ("./Exercice2 config_perso.in")
     inputPath = argv[1];
@@ -829,8 +849,9 @@ int main(int argc, char* argv[])
   engine->run(); // executer la simulation
 
   delete engine; // effacer la class simulation
-  cout << "Fin de la simulation." << endl;
-
-
+  // cout << "Fin de la simulation." << endl;
+end = std::chrono::system_clock::now();
+std::chrono::duration<double> elapsed_seconds = end - start;
+cout << elapsed_seconds.count() << endl;
   return 0;
 }

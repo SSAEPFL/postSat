@@ -1,24 +1,24 @@
 
 % Parametres physiques :
-tfin   = 3.155814954e7% temps total maximal de simulation [s] 3.155814954e7 5579.2552
+tfin   = 5580 % temps total maximal de simulation [s] 3.155814954e7 864000 5580.76745 5.579995449509900e3
 day=4
 month=3
 hour=14
 year = 2022
 minute=14
 second=1
-mass1   = 4.2e5  % mass du corps 2[kg] Satellite
-Area = 2500 ;% aire face au soleil en m^2
-C_d = 2 % Coefficient de trainé (sans dimension) Approx: 2
-x01     = 6.795309e6       % position initiale en x [m] corps 1 6.795309e6
+mass1   = 457735  % mass du corps 2[kg] Satellite
+Area = 1345.40;% aire face au soleil en m^2
+C_d = 2.5 % Coefficient de trainé (sans dimension) Approx: 2
+x01     = 6.79281e6       % position initiale en x [m] corps 1 6.795309e6
 y01     = 0.e1        % position initiale en y [m] corps  1
 z01     = 0.e1        % position initiale en z [m] corps 1
 vx01    = 0.e0       % vitesse initiale en x [m/s] corps 1
-vy01    =  7657        % vitesse initiale en y [m/s] corps 1 7676
+vy01    =  7662    % vitesse initiale en y [m/s] corps 1 7676 7657 7661
 vz01    =  0.e0       % vitesse initiale en z [m/s] corps 1
 % Parametres numeriques :
-nsteps   = 31558149 % nombre de pas de temps maximal (dt=tfin/nsteps) 557925
+nsteps   = 5580  % nombre de pas de temps maximal (dt=tfin/nsteps) 557925
 schema   = RK4  % Schema numerique RK4,SV
 tol     = 0       % tolerance methode Adaptatif
-output   = output.out % nome/adresse du fichier d'output
-sampling = 5579    % nombre de pas de temps entre deux ecritures, no sampling = -1
+output   = output_sun.out % nome/adresse du fichier d'output
+sampling = 1    % nombre de pas de temps entre deux ecritures, no sampling = -1
