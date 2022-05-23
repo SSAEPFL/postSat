@@ -120,7 +120,7 @@ valarray<T> const& array2){
 }
 
 valarray<double> equatorialtocartesian(double ascension,\
-double declinaison, double distance){ // Transformation du système equatorial à Cartesien par rapport au point VERNAL
+double declinaison, double distance){ // Transformation du système equatorial à Cartesien (axe X passe par le point VERNAL, axe Z passe par les pôles)
 valarray<double> array3 = valarray<double>(3);
 double hr2rad = 2*3.1415926535897932384626433832795028841971/24.0; // Conversion d'angle en heure -> radians
 double deg2rad = 3.1415926535897932384626433832795028841971/180.0; // Conversion d'angle en degré -> radians
@@ -130,6 +130,19 @@ double deg2rad = 3.1415926535897932384626433832795028841971/180.0; // Conversion
   return array3;
 }
 
+valarray<double> cartesiantoequatorial(double const& x, double const& y, double const& z){ // Transformation de coordonnées cartésiennes en coordonnées equatoriales (axe X passe par le point VERNAL, axe z passe par les pôles)
+	// Données en radian!!!
+	valarray<double> equa = valarray<double>(3);
+	const double pi=3.1415926535897932384626433832795028841971;
+	double r = sqrt(pow(x,2) + pow(y,2) + pow(z,2));
+	equa[0] = r;
+	equa[1] = asin(z/r); // Déclinaison
+	equa[2] = atan(y/x); // Ascension droite
+	if ((x*y > 0 and x < 0) or (x*y < 0 and x < 0) ){
+	equa[2] +=	pi;
+	}
+	return equa;
+}
 valarray<double> continuationRADEC(double dt_,int day, int month, int year, int heure,int minute, double second  ){
 chgmtemps(day,month,year,heure,minute,second);
 SolarSystemObject Soleil_avant= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, heure, minute, second);
@@ -188,6 +201,10 @@ private:
   valarray<double> h_ = valarray<double>(0.,50);
   valarray<double> rho_m = valarray<double>(0.,50);
   valarray<double> rho_M = valarray<double>(0.,50);
+  // Coefficient pour le géopotentiel
+  vector<vector<double>> C_nm;
+  vector<vector<double>> S_nm;
+  unsigned int ordre;
 
   void printOut(bool write,vector< vector<double> > matrix)
   {
@@ -220,7 +237,8 @@ protected:
 int day,month,year,hour,minute;
 double second;
 const double astronomical_unit= 1.496e11;
-double area; // Aire du satellite recevant la lumière du soleil
+double Solar_area; // Aire du satellite recevant la lumière du soleil
+double Drag_area; // Surface de frottement du satellite avec l'atmosphère
 double C_d; // Coefficient de frottement (Drag coefficient)
 valarray<double> x1=valarray<double>(0.e0,12); // Position des astres
 // donnes internes
@@ -294,7 +312,122 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
   force[1] = force[1] * (x1_[7] - x_[1]);
   force[2] = force[2] * (x1_[8] - x_[2]);
 
-return force;
+	return force;
+}
+
+double P_norm(size_t const& n, size_t const& m, double const& x)const{
+
+	// Polynome de Legendre associé normalisé
+
+	/*double k = 0;
+
+	if (m == 0){
+		k = 1;
+	}
+	double C = sqrt((2-k)*(2*n+1)*tgamma(n-m)/tgamma(n+m));
+	return C*legendre_p(n,m,x);*/
+	return 1;
+}
+
+double Geopot(valarray<double> const& equatorial) const {
+
+	// Calcul le potentiel terrestre U. Les coordonées sont dans le système equatorial
+	// Formules tirées du livre Satellite Orbits (Montenbruck and Gill) p.57-58
+
+	double r = equatorial[0];
+	double phi = equatorial[1];
+	double lambda = equatorial[2];
+
+	double double_somme(0);
+
+	for(size_t n(0); n <= ordre ; n++){
+		for(size_t m(0); m <= n ; m++){
+			double_somme += pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
+			//cout << "xd ";
+		}}
+		//cout << endl;
+
+	double U = G*masse_terre/r*double_somme;
+
+	return U;
+}
+/* TODO :
+ * Implémenter P_norm, C_norm et S_norm */
+
+valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_) const{
+
+	valarray<double> x_vect = x_[slice(0,3,1)];
+	valarray<double> eq_vect(3);
+	eq_vect = cartesiantoequatorial(x_vect[0],x_vect[1],x_vect[2]);
+
+	// Quantités infinitésimales
+
+	valarray<double> dr(3);
+	dr[0] = 5.e-2;
+	dr[1] = 0;
+	dr[2] = 0;
+
+	valarray<double> dphi(3);
+	dphi[0] = 0;
+	dphi[1] = 2*pi/6.e12;
+	dphi[2] = 0;
+
+	valarray<double> dlambda(3);
+	dlambda[0] = 0;
+	dlambda[1] = 0;
+	dlambda[2] = 2*pi/6.e12;
+
+	double U = Geopot(eq_vect);
+
+	// Définition de grandeurs pratiques
+
+	double x = x_vect[0];
+	double y = x_vect[1];
+	double z = x_vect[2];
+	double r = eq_vect[0];
+
+	// Dérivées de r
+
+	double drdx = x/r;
+	double drdy = y/r;
+	double drdz = z/r;
+
+	// Dérivées de phi
+
+	double dphidx = -x/(pow(r,3)*sqrt(1-pow(z/r,2)));
+	double dphidy = -y/(pow(r,3)*sqrt(1-pow(z/r,2)));
+	double dphidz = 2*z/r/sqrt(1-pow(z/r,2))*(1/r - pow(z,2)/pow(r,3));
+
+	// Dérivées de lambda
+
+	double dlambdadx = -y/(pow(x,2) + pow(y,2));
+	double dlambdady = x/(pow(x,2) + pow(y,2));
+	double dlambdadz = 0;
+
+	// Calcul du gradient
+
+	double dUdr = (Geopot(eq_vect + dr)-U)/dr[0];
+	double dUdphi = (Geopot(eq_vect + dphi)-U)/dphi[1];
+	double dUdlambda = (Geopot(eq_vect + dlambda)-U)/dlambda[2];
+
+	double dUdx = dUdr*drdx + dUdphi*dphidx + dUdlambda*dlambdadx;
+	double dUdy = dUdr*drdy + dUdphi*dphidy	+ dUdlambda*dlambdady;
+	double dUdz = dUdr*drdz + dUdphi*dphidz + dUdlambda*dlambdadz;
+
+	valarray<double> r_p_p = valarray<double> (0.e0,3);
+	r_p_p[0] = dUdx;
+	r_p_p[1] = dUdy;
+	r_p_p[2] = dUdz;
+
+	valarray<double> f(3);
+	f = ForceGravitationTerre(x_,x1_);
+
+	//Pour débuguer
+
+	//cout << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
+	//cout << r_p_p[0] << ' ' << r_p_p[1] << ' ' << r_p_p[2] << endl;
+
+	return r_p_p;
 }
 
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -312,7 +445,7 @@ valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> con
 	omega_T[2] = 0.7292e-4; // rad/s
 	valarray<double> v_r = valarray<double>(0.e0,3); // Vecteur vitesse relative du satellite par rapport à celle de l'atmosphère
 	v_r = v_vect - vectorProduct(omega_T,x_vect);
-	valarray<double> force =-0.5*C_d*area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
+	valarray<double> force =-0.5*C_d*Drag_area*rho(x_,x1_,6)*pow(norm2(v_r),2)*e_v;
 	//cout << e_v[0] << ' '  << e_v[1] << ' ' << e_v[2] <<endl;
 	//cout << force[0] << ' '  << force[1] << ' ' << force[2] <<endl;
 	//cout << norm2(force) << endl;
@@ -365,9 +498,9 @@ valarray<double> force= valarray<double>(0.e0,3);
 // Cst Solar formula : sigma T^4 (R_s/R)^2
 double sigma = 5.670374e-8; double T_s = 5778; double R_s = 6.957e8;
 valarray <double> position = x_[slice(0,3,1)];
-double solarCst = sigma*pow(5778,4)*R_s/norm2(position)*R_s/norm2(position);
+double solarCst = sigma*pow(T_s,4)*R_s/norm2(position)*R_s/norm2(position);
 
-force = solarCst/celeritas * area ;
+force = solarCst/celeritas * Solar_area;
 force[0] = x_[0]/norm2(position);
 force[1] = x_[1]/norm2(position);
 force[2] = x_[2]/norm2(position);
@@ -447,13 +580,16 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass;
-accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 //accelere = ForceGravitationTerre(x_,x1_)+ ForceGravitationSoleil(x_,x1_);
   return accelere;
 }
+
+
 
 public:
 
@@ -486,7 +622,8 @@ public:
     x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
-    area   = configFile.get<double>("Area");		 // lire composante de l'aire
+    Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
+    Drag_area = configFile.get<double>("Drag_area"); // lire la surface de frottement
     C_d = configFile.get<double>("C_d");             // lire le drag coefficient
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
@@ -496,6 +633,7 @@ public:
     second = configFile.get<double>("second"); // Lire l'heure de la détection
     sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
     tol = configFile.get<double>("tol");
+    ordre = configFile.get<unsigned int>("ordre");
     dt = tfin / nsteps;          // calculer le time step
 
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
@@ -515,6 +653,34 @@ public:
 	h_ = coeff[slice(0,N,3)];
 	rho_m = coeff[slice(1,N,3)];
 	rho_M = coeff[slice(2,N,3)];
+
+	// Création des tables de coefficients pour le géopotentiel
+
+	ifstream cs("C_nm.txt");
+	istream_iterator<double> start_c(cs), end_c;
+	vector<double> numbers_c(start_c, end_c);
+	cs.close();
+	size_t n(ordre);
+	vector<vector<double>> tab_C(n+1);
+	for (size_t i(0) ; i <= n; i++){
+		for (size_t j(0) ; j <= i ; j++){
+			tab_C[i].push_back(1.e-6*numbers_c[i*(i+1)/2 + j]);
+			}
+		}
+
+	C_nm = tab_C;
+
+	ifstream ss("S_nm.txt");
+	istream_iterator<double> start_s(ss), end_s;
+	vector<double> numbers_s(start_s, end_s);
+	ss.close();
+	vector<vector<double>> tab_S(n+1);
+	for (size_t i(0) ; i <= n; i++){
+		for (size_t j(0) ; j <= i ; j++){
+			tab_S[i].push_back(1.e-6*numbers_s[i*(i+1)/2 + j]);
+			}
+		}
+	S_nm = tab_S;
 
     // Ouverture du fichier de sortie
     outputFile = new ofstream(configFile.get<string>("output").c_str());
