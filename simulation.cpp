@@ -7,6 +7,7 @@
 #include <vector>
 #include "ConfigFile.h" // Il contient les methodes pour lire inputs et ecrire outputs
                           // Fichier .tpp car inclut fonctions template
+#include <array>
 #include<stdio.h>
 #include "ephemeris/Ephemeris.hpp"
 #include <chrono>
@@ -122,11 +123,13 @@ valarray<T> const& array2){
 valarray<double> equatorialtocartesian(double ascension,\
 double declinaison, double distance){ // Transformation du système equatorial à Cartesien (axe X passe par le point VERNAL, axe Z passe par les pôles)
 valarray<double> array3 = valarray<double>(3);
+
 double hr2rad = 2*3.1415926535897932384626433832795028841971/24.0; // Conversion d'angle en heure -> radians
 double deg2rad = 3.1415926535897932384626433832795028841971/180.0; // Conversion d'angle en degré -> radians
   array3[0] = distance*cos(hr2rad*ascension)*cos(deg2rad*declinaison); // premier composante
   array3[1] = distance*sin(hr2rad*ascension)*cos(deg2rad*declinaison); // deuxieme composante
   array3[2] = distance*sin(deg2rad*declinaison); // troisieme composante
+
   return array3;
 }
 
@@ -211,6 +214,7 @@ private:
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
+
    //    *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2]  << " "<<dt<< " "<<endl; // write output on file
 
     matrix[0].push_back(t);
@@ -218,6 +222,7 @@ private:
     matrix[2].push_back(x[1]);
     matrix[3].push_back(x[2]);
     matrix[4].push_back(dt);
+
 
       last = 1;
        // fin +=1;
@@ -622,8 +627,9 @@ public:
     x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
-  //  Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
-  //  Drag_area = configFile.get<double>("Drag_area"); // lire la surface de frottement
+    //Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
+   // Drag_area = configFile.get<double>("Drag_area"); // lire la surface de frottement
+
     C_d = configFile.get<double>("C_d");             // lire le drag coefficient
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
@@ -633,7 +639,8 @@ public:
     second = configFile.get<double>("second"); // Lire l'heure de la détection
     sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
     tol = configFile.get<double>("tol");
-  //  ordre = configFile.get<unsigned int>("ordre");
+    //ordre = configFile.get<unsigned int>("ordre");
+
     dt = tfin / nsteps;          // calculer le time step
 
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
@@ -718,6 +725,7 @@ public:
 
     last = 0; // initialise le parametre d'ecriture
     vector< vector<double> >  matrix = {{},{},{},{},{}};
+    matrix.reserve(nsteps);
         int compteur = 0;
     printOut(true,matrix); // ne pas ecrire premier pas de temps
   if (tol == 0){
@@ -803,7 +811,6 @@ public:
     Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second);
     //Mise a jour des positions des astres
-
     x1_[6]    = 0.0;		 // lire composante x position Terre
     x1_[7]    = 0.0;		 // lire composante y position
     x1_[8]    = 0.0;		 // lire composante z position
@@ -843,6 +850,7 @@ public:
     x1_[4]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[1];	 // lire composante y position Lune
     x1_[5]    = equatorialtocartesian(Lune.equaCoordinates.ra, Lune.equaCoordinates.dec, astronomical_unit*Lune.distance)[2];		 // lire composante z position Lune
 */
+
   }
 
   void step2(double& dt_) override // Methode utile pour le pas de temps adaptatif
