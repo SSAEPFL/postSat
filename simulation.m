@@ -170,4 +170,8 @@ ylabel('$r$ [m]')
 legend('Total Forces', 'Earth radius')
 %%  Temps de simulation -> Nombre de pas = temps simuler , sampling = 1 
 second_simuler = [5580,86400, 864000,2592000,15552000, 3.15581e+07]; %Runge-Kutta
-elapsed_time = [0.559116,7.65135,77.7391,226.791,1469.37,3529.63]
+elapsed_time_ju = [0.559116,7.65135,77.7391,226.791,1469.37,3529.63]
+elapsed_time_esp = [0.25833,3.41696,33.0657,95.428,567.514,1158.06];
+
+elapsed_time_ju2 = [0.460809,6.64056,63.6126,179.872,1195.2,3408.56]
+elapsed_time_esp = [0.25833,3.41696,33.0657,95.428,567.514,1158.06];

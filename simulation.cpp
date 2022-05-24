@@ -206,19 +206,19 @@ private:
   vector<vector<double>> S_nm;
   unsigned int ordre;
 
-  void printOut(bool write,vector< vector<double> > matrix)
+  void printOut(bool write,vector< vector<double> >& matrix)
   {
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
     if((!write && last>=sampling) || (write && last!=1))
     {
-      *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2]  << " "<<dt<< " "<<endl; // write output on file
+   //    *outputFile << t  << " "<<x[0]<< " "<< x[1] << " " << x[2]  << " "<<dt<< " "<<endl; // write output on file
 
-  /*  matrix[0].pushback(t);
-    matrix[1].pushback(x[0]);
-    matrix[2].pushback(x[1]);
-    matrix[3].pushback(x[2]);
-    matrix[4].pushback(dt);
-    */
+    matrix[0].push_back(t);
+    matrix[1].push_back(x[0]);
+    matrix[2].push_back(x[1]);
+    matrix[3].push_back(x[2]);
+    matrix[4].push_back(dt);
+
       last = 1;
        // fin +=1;
     }
@@ -622,8 +622,8 @@ public:
     x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
-    Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
-    Drag_area = configFile.get<double>("Drag_area"); // lire la surface de frottement
+  //  Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
+  //  Drag_area = configFile.get<double>("Drag_area"); // lire la surface de frottement
     C_d = configFile.get<double>("C_d");             // lire le drag coefficient
     day = configFile.get<double>("day"); // Lire l'heure de la détection
     month = configFile.get<double>("month"); // Lire l'heure de la détection
@@ -633,7 +633,7 @@ public:
     second = configFile.get<double>("second"); // Lire l'heure de la détection
     sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
     tol = configFile.get<double>("tol");
-    ordre = configFile.get<unsigned int>("ordre");
+  //  ordre = configFile.get<unsigned int>("ordre");
     dt = tfin / nsteps;          // calculer le time step
 
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
@@ -717,7 +717,7 @@ public:
     x1[5]    = positionLune[2];		 //Lune Héliocentrique
 
     last = 0; // initialise le parametre d'ecriture
-    vector< vector<double> >  matrix;
+    vector< vector<double> >  matrix = {{},{},{},{},{}};
         int compteur = 0;
     printOut(true,matrix); // ne pas ecrire premier pas de temps
   if (tol == 0){
@@ -754,6 +754,10 @@ public:
     printOut(true,matrix); // ecrire dernier pas de temps
 
   }
+
+  for(int i(0); i<matrix[0].size(); i++){
+ *outputFile << matrix[0][i]  << " "<<matrix[1][i] << " "<< matrix[2][i] << " " <<matrix[3][i]   << " "<<matrix[4][i] << " "<<endl; // write output on file
+}
 };
 
 };
