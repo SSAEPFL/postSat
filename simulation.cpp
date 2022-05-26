@@ -1,5 +1,6 @@
 #include <iostream>       // basic input output streams
 #include <fstream>        // input output file stream class
+#define __STDCPP_WANT_MATH_SPEC_FUNCS__ 1
 #include <cmath>          // librerie mathematique de base
 #include <iomanip>        // input output manipulators
 #include <valarray>       // valarray functions
@@ -137,6 +138,7 @@ valarray<double> cartesiantoequatorial(double const& x, double const& y, double 
 	equa[0] = r;
 	equa[1] = asin(z/r); // Déclinaison
 	equa[2] = atan(y/x); // Ascension droite
+	//cout << x << ' ' << y << ' ' << atan(y/x) << endl;
 	if ((x*y > 0 and x < 0) or (x*y < 0 and x < 0) ){
 	equa[2] +=	pi;
 	}
@@ -203,6 +205,7 @@ private:
   vector<vector<double>> C_nm;
   vector<vector<double>> S_nm;
   unsigned int ordre;
+  double dr; // Valeur de la quantité infinitésimal dr pour calculer le gradient
 
   void printOut(bool write)
   {
@@ -302,18 +305,20 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
 	return force;
 }
 
-double P_norm(size_t const& n, size_t const& m, double const& x)const{
+double P_norm(size_t const& n, size_t const& m, long double const& x)const{
 
 	// Polynome de Legendre associé normalisé
 	
-	/*double k = 0;
+	double k = 0;
 
 	if (m == 0){
 		k = 1;
 	}
-	double C = sqrt((2-k)*(2*n+1)*tgamma(n-m)/tgamma(n+m));
-	return C*legendre_p(n,m,x);*/
-	return 1;
+	double C = sqrt((2-k)*(2*n+1)*tgamma(n-m+1)/tgamma(n+m+1));
+	//cout << C <<' ' << m << ' ' << n <<endl;
+	//cout << setprecision(30) << C*assoc_legendrel(n,m,x) << endl;
+	return C*assoc_legendrel(n,m,x);
+	//C*assoc_legendrel(n,m,x);
 }
 
 double Geopot(valarray<double> const& equatorial) const {
@@ -324,22 +329,23 @@ double Geopot(valarray<double> const& equatorial) const {
 	double r = equatorial[0];
 	double phi = equatorial[1];
 	double lambda = equatorial[2];
-
+	//cout << r <<' '<< phi << ' ' << lambda << ' ' <<endl;
 	double double_somme(0);
 
 	for(size_t n(0); n <= ordre ; n++){
 		for(size_t m(0); m <= n ; m++){
 			double_somme += pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
 			//cout << "xd ";
+			//cout << pow(rayon_terre/r,n) <<' ' <<P_norm(n,m,sin(phi)) << ' ' <<C_nm[n][m]*cos(m*lambda) <<' ' << S_nm[n][m]*sin(m*lambda) << endl;
 		}}
 		//cout << endl;
-
+	//cout << pow(rayon_terre/r,n)*P_norm(n,m,sin(phi)) << ' ' << (C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda)) <<endl;
+	//cout << double_somme
+	//cout << double_somme<< endl;
 	double U = G*masse_terre/r*double_somme;
 
 	return U;
 }
-/* TODO :
- * Implémenter P_norm, C_norm et S_norm */
 
 valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_) const{
 
@@ -349,10 +355,10 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 
 	// Quantités infinitésimales
 
-	valarray<double> dr(3);
-	dr[0] = 5.e-2;
-	dr[1] = 0;
-	dr[2] = 0;
+	valarray<double> vec_dr(3); // Vecteur infinitésimal
+	vec_dr[0] = dr;
+	vec_dr[1] = 0;
+	vec_dr[2] = 0;
 
 	valarray<double> dphi(3);
 	dphi[0] = 0;
@@ -392,10 +398,16 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	double dlambdadz = 0;
 
 	// Calcul du gradient
-
-	double dUdr = (Geopot(eq_vect + dr)-U)/dr[0];
+	
+	//cout << Geopot(eq_vect + vec_dr) << ' ' << U << endl;
+	//cout << eq_vect[0] << ' ' << eq_vect[1] << ' '  << eq_vect[2] << endl;
+	//cout << vec_dr[0] << ' ' << vec_dr[1] << ' ' << vec_dr[2] << endl;
+	
+	double dUdr = (Geopot(eq_vect + vec_dr)-U)/dr;
 	double dUdphi = (Geopot(eq_vect + dphi)-U)/dphi[1];
 	double dUdlambda = (Geopot(eq_vect + dlambda)-U)/dlambda[2];
+	
+	//cout << dUdr << ' ' << dUdphi << ' ' << dUdlambda << ' ' << drdx << ' ' << drdy << ' ' << drdz << ' ' << dphidx << ' ' << dphidy << ' ' << dphidz << ' ' << dlambdadx << ' ' <<dlambdady << ' ' << dlambdadz <<endl;
 
 	double dUdx = dUdr*drdx + dUdphi*dphidx + dUdlambda*dlambdadx;
 	double dUdy = dUdr*drdy + dUdphi*dphidy	+ dUdlambda*dlambdady;
@@ -567,8 +579,8 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
-//accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_);
 
@@ -621,6 +633,7 @@ public:
     tol = configFile.get<double>("tol");
     ordre = configFile.get<unsigned int>("ordre"); 
     dt = tfin / nsteps;          // calculer le time step
+    dr = configFile.get<double>("dr");
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
 */
@@ -709,7 +722,7 @@ public:
       step(x,x1,dt);  // faire la mise a jour de la simulation
       t+=dt;
       printOut(false); // ecrire pas de temps actuel
-      cout << t << "\r";
+      //cout << t << "\r";
     }
     if (tfin > t){
       dt = tfin-t;
