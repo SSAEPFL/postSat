@@ -224,7 +224,10 @@ private:
     matrix[1].push_back(x[0]);
     matrix[2].push_back(x[1]);
     matrix[3].push_back(x[2]);
-    matrix[4].push_back(dt);
+    matrix[4].push_back(x[3]);
+    matrix[5].push_back(x[4]);
+    matrix[6].push_back(x[5]);
+    matrix[7].push_back(dt);
 
 
       last = 1;
@@ -287,11 +290,13 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
   force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
   force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[1]/(norme3));
   force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[2]/(norme3));
+
 /*
 force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
 force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
 force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
 */
+
   return force;
 }
 
@@ -327,7 +332,7 @@ double P_norm(size_t const& n, size_t const& m, long double const& x)const{
 
 	// Polynome de Legendre associé normalisé
 
-	
+
 	double k = 0;
 
 	if (m == 0){
@@ -472,11 +477,11 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	double dlambdadz = 0;
 
 	// Calcul du gradient
-	
+
 	//cout << Geopot(eq_vect + vec_dr) << ' ' << U << endl;
 	//cout << eq_vect[0] << ' ' << eq_vect[1] << ' '  << eq_vect[2] << endl;
 	//cout << vec_dr[0] << ' ' << vec_dr[1] << ' ' << vec_dr[2] << endl;
-	
+
 	/*
 	double dUdr = (Geopot(eq_vect + vec_dr)-U)/dr;
 	double dUdphi = (Geopot(eq_vect + vec_dphi)-U)/vec_dphi[1];
@@ -486,7 +491,7 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	double dUdr = dUdr_geo(eq_vect);
 	double dUdphi = dUdphi_geo(eq_vect);
 	double dUdlambda = dUdlambda_geo(eq_vect);
-	
+
 	//cout << dUdr << ' ' << dUdphi << ' ' << dUdlambda << ' ' << drdx << ' ' << drdy << ' ' << drdz << ' ' << dphidx << ' ' << dphidy << ' ' << dphidz << ' ' << dlambdadx << ' ' <<dlambdady << ' ' << dlambdadz <<endl;
 
 	double dUdx = dUdr*drdx + dUdphi*dphidx + dUdlambda*dlambdadx;
@@ -664,7 +669,8 @@ accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+Forc
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
-//accelere = ForceGravitationTerre(x_,x1_)+ ForceGravitationSoleil(x_,x1_);
+accelere = ForceGravitationTerre(x_,x1_)+ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+cout <<"Terre2 : " << Acceleration_Geopotentiel(x_,x1_)[0] <<"Terre : " << ForceGravitationTerre(x_,x1_)[0] <<" Lune : " << ForceGravitationLune(x_,x1_)[0]<< " Soleil : " << ForceGravitationSoleil(x_,x1_)[0]<< " Frottement " << ForceFrottement(x_,x1_)[0]/mass << " Inertie : " <<ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0] << " Radiation : " <<ForceSolaire(x_,x1_)[0]/mass << endl;
   return accelere;
 }
 
@@ -720,6 +726,7 @@ public:
     dr = configFile.get<double>("dr"); // Quantité infinitésimal dr
     dphi = configFile.get<double>("dphi"); // Quantité infinitésimal dphi
 
+
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
 */
@@ -768,7 +775,7 @@ public:
 
     // Ouverture du fichier de sortie
     outputFile = new ofstream(configFile.get<string>("output").c_str());
-    outputFile->precision(15); // Les nombres seront ecrits avec 15 decimales
+    outputFile->precision(20); // Les nombres seront ecrits avec 15 decimales
   };
 
   // Destructeur virtuel
@@ -801,7 +808,7 @@ public:
     x1[5]    = positionLune[2];		 //Lune Héliocentrique
 
     last = 0; // initialise le parametre d'ecriture
-    vector< vector<double> >  matrix = {{},{},{},{},{}};
+    vector< vector<double> >  matrix = {{},{},{},{},{},{},{},{}};
     matrix.reserve(nsteps);
         int compteur = 0;
     printOut(true,matrix); // ne pas ecrire premier pas de temps
@@ -843,7 +850,7 @@ public:
   }
 
   for(int i(0); i<matrix[0].size(); i++){
- *outputFile << matrix[0][i]  << " "<<matrix[1][i] << " "<< matrix[2][i] << " " <<matrix[3][i]   << " "<<matrix[4][i] << " "<<endl; // write output on file
+ *outputFile << matrix[0][i]  << " "<<matrix[1][i] << " "<< matrix[2][i] << " " <<matrix[3][i]   << " "<<matrix[4][i] << " "<< matrix[5][i] << " " <<matrix[6][i]   << " "<<matrix[7][i] << " "<<endl; // write output on file
 }
 };
 
