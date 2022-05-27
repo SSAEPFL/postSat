@@ -26,6 +26,8 @@ figure
 plot(data(:,1), r, 'k-')
 hold on
 % plot(data2(:,1),(r2-r)./r, 'r.-')
+ %plot(data(:,1),6.371009e6*ones(size(data(:,1))),'r--')
+
 %plot(data(:,1),6.371009e6*ones(size(data(:,1))),'r--')
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
@@ -56,6 +58,7 @@ xlabel('x')
 ylabel('y')
 zlabel('z')
 
+
 %% 
 data_terre = load('output_terre.out');
 r_terre = sqrt(data_terre(:,2).^2 + data_terre(:,3).^2 + data_terre(:,4).^2);
@@ -66,7 +69,7 @@ hold on
 % plot(data_terre(:,1),6.371009e6*ones(size(data_terre(:,1))),'r--')
 grid on
 distance_devi_terre = (max(max(r_terre(1:465))) -max(max(r_terre(71535:end))))/1000 % en KM
-distance_oscillation_terre = (max(max(r_terre)) -min(min(r_terre)))/1000 - distance_devi% en KM
+distance_oscillation_terre = (max(max(r_terre)) -min(min(r_terre)))/1000 - distance_devi_terre% en KM
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
 legend('No ext forces', 'Earth radius')
@@ -80,7 +83,7 @@ hold on
 % plot(data_inertie(:,1),6.371009e6*ones(size(data_inertie(:,1))),'r--')
 grid on
 distance_devi_inertie = (max(max(r_inertie(1:465))) -max(max(r_inertie(71535:end))))/1000 % en KM
-distance_oscillation_inertie = (max(max(r_inertie)) -min(min(r_inertie)))/1000 - distance_devi% en KM
+distance_oscillation_inertie = (max(max(r_inertie)) -min(min(r_inertie)))/1000 - distance_devi_inertie% en KM
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
 legend('Inertial Forces', 'Earth radius')
@@ -121,7 +124,7 @@ hold on
 % plot(data_Moon(:,1),6.371009e6*ones(size(data_Moon(:,1))),'r--')
 grid on
 distance_devi_moon= (max(max(r_Moon(1:465))) -max(max(r_Moon(71535:end))))/1000 % en KM
-distance_oscillation_moon = (max(max(r_Moon)) -min(min(r_Moon)))/1000 - distance_devi% en KM
+distance_oscillation_moon = (max(max(r_Moon)) -min(min(r_Moon)))/1000 - distance_devi_moon% en KM
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
 
@@ -136,7 +139,7 @@ hold on
 % plot(data_pressure(:,1),6.371009e6*ones(size(data_pressure(:,1))),'r--')
 grid on
 distance_devi_pressure = (max(max(r_pressure(1:465))) -max(max(r_pressure(71535:end))))/1000 % en KM
-distance_oscillation_pressure = (max(max(r_pressure)) -min(min(r_pressure)))/1000 - distance_devi% en KM
+distance_oscillation_pressure = (max(max(r_pressure)) -min(min(r_pressure)))/1000 - distance_devi_pressure% en KM
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
 legend('Radiation pressure', 'Earth radius')
@@ -150,7 +153,7 @@ hold on
 % plot(data_frot(:,1),6.371009e6*ones(size(data_frot(:,1))),'r--')
 grid on
 distance_devi_frot = (max(max(r_frot(1:465))) -max(max(r_frot(71535:end))))/1000 % en KM
-distance_oscillation_frot = (max(max(r_frot)) -min(min(r_frot)))/1000 - distance_devi% en KM
+distance_oscillation_frot = (max(max(r_frot)) -min(min(r_frot)))/1000 - distance_devi_frot% en KM
 xlabel('$t$ [s]')
 ylabel('$r$ [m]')
 legend('Drag Force', 'Earth radius')
@@ -175,3 +178,20 @@ elapsed_time_esp = [0.25833,3.41696,33.0657,95.428,567.514,1158.06];
 
 elapsed_time_ju2 = [0.460809,6.64056,63.6126,179.872,1195.2,3408.56]
 elapsed_time_esp2 = [0.249142,3.74077,38.3967,114.507,622.097,1278.94];
+%% Comparison
+data_Nasa = load('NASA.txt'); 
+mydata = load('output.out');
+figure 
+ plot3(data_Nasa(1:361,2)*1000,data_Nasa(1:361,3)*1000,data_Nasa(1:361,4)*1000)
+hold on
+plot3(mydata(:,2),mydata(:,3),mydata(:,4),'r--')
+%erreur
+ erreur_1tour = sqrt((data_Nasa(25,2)*1000-mydata(25,2))^2+(data_Nasa(25,3)*1000-mydata(25,3))^2+(data_Nasa(25,4)*1000-mydata(25,4))^2)
+ erreur_1jour = sqrt((data_Nasa(361,2)*1000-mydata(end,2))^2+(data_Nasa(361,3)*1000-mydata(end,3))^2+(data_Nasa(361,4)*1000-mydata(end,4))^2)
+error = zeros(1,361);
+for i = 1:361
+    error(i) =sqrt((data_Nasa(i,2)*1000-mydata(i,2))^2+(data_Nasa(i,3)*1000-mydata(i,3))^2+(data_Nasa(i,4)*1000-mydata(i,4))^2);
+end
+
+figure 
+plot(mydata(:,1), error)

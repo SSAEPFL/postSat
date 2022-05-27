@@ -221,7 +221,10 @@ private:
     matrix[1].push_back(x[0]);
     matrix[2].push_back(x[1]);
     matrix[3].push_back(x[2]);
-    matrix[4].push_back(dt);
+    matrix[4].push_back(x[3]);
+    matrix[5].push_back(x[4]);
+    matrix[6].push_back(x[5]);
+    matrix[7].push_back(dt);
 
 
       last = 1;
@@ -281,13 +284,9 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
 
   valarray<double> soleil= x1_[slice(0,3,1)];
   double norme3 = norm2(soleil)*norm2(soleil)*norm2(soleil);
-  /*force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
+  force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
   force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[1]/(norme3));
   force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[2]/(norme3));
-*/
-force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
-force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
-force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
 
   return force;
 }
@@ -585,12 +584,13 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass+ForceGravitationSoleil(x_,x1_);
 //accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
-//accelere = ForceGravitationTerre(x_,x1_)+ ForceGravitationSoleil(x_,x1_);
+accelere = ForceGravitationTerre(x_,x1_)+ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+cout <<"Terre2 : " << Acceleration_Geopotentiel(x_,x1_)[0] <<"Terre : " << ForceGravitationTerre(x_,x1_)[0] <<" Lune : " << ForceGravitationLune(x_,x1_)[0]<< " Soleil : " << ForceGravitationSoleil(x_,x1_)[0]<< " Frottement " << ForceFrottement(x_,x1_)[0]/mass << " Inertie : " <<ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0] << " Radiation : " <<ForceSolaire(x_,x1_)[0]/mass << endl;
   return accelere;
 }
 
@@ -691,7 +691,7 @@ public:
 
     // Ouverture du fichier de sortie
     outputFile = new ofstream(configFile.get<string>("output").c_str());
-    outputFile->precision(15); // Les nombres seront ecrits avec 15 decimales
+    outputFile->precision(20); // Les nombres seront ecrits avec 15 decimales
   };
 
   // Destructeur virtuel
@@ -724,7 +724,7 @@ public:
     x1[5]    = positionLune[2];		 //Lune Héliocentrique
 
     last = 0; // initialise le parametre d'ecriture
-    vector< vector<double> >  matrix = {{},{},{},{},{}};
+    vector< vector<double> >  matrix = {{},{},{},{},{},{},{},{}};
     matrix.reserve(nsteps);
         int compteur = 0;
     printOut(true,matrix); // ne pas ecrire premier pas de temps
@@ -764,7 +764,7 @@ public:
   }
 
   for(int i(0); i<matrix[0].size(); i++){
- *outputFile << matrix[0][i]  << " "<<matrix[1][i] << " "<< matrix[2][i] << " " <<matrix[3][i]   << " "<<matrix[4][i] << " "<<endl; // write output on file
+ *outputFile << matrix[0][i]  << " "<<matrix[1][i] << " "<< matrix[2][i] << " " <<matrix[3][i]   << " "<<matrix[4][i] << " "<< matrix[5][i] << " " <<matrix[6][i]   << " "<<matrix[7][i] << " "<<endl; // write output on file
 }
 };
 
