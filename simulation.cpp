@@ -211,7 +211,7 @@ private:
   vector<vector<double>> S_nm;
   unsigned int ordre;
   double dr; // Valeur de la quantité infinitésimal dr pour calculer le gradient
-
+  double dphi; 
   void printOut(bool write,vector< vector<double> >& matrix)
   {
     // Ecriture tous les [sampling] pas de temps, sauf si write est vrai
@@ -284,14 +284,14 @@ valarray<double> ForceGravitationSoleil(valarray<double> const& x_,valarray<doub
 
   valarray<double> soleil= x1_[slice(0,3,1)];
   double norme3 = norm2(soleil)*norm2(soleil)*norm2(soleil);
-  /*force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
+  force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[0]/(norme3));
   force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[1]/(norme3));
   force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_)))+x1_[2]/(norme3));
-*/
+/*
 force[0] = force[0] * ((x_[0]-x1_[0])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
 force[1] = force[1] * ((x_[1]-x1_[1])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
 force[2] = force[2] * ((x_[2]-x1_[2])/(norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))*norm2(distance(1,x_,x1_))));
-
+*/
   return force;
 }
 
@@ -365,7 +365,62 @@ double Geopot(valarray<double> const& equatorial) const {
 
 	return U;
 }
+double dUdr_geo(valarray<double> const& equatorial) const{
+	
+	double dUdr;
+	
+	double r = equatorial[0];
+	double phi = equatorial[1];
+	double lambda = equatorial[2];
+	double double_somme(0);
+	// 
+	
+	for(size_t n(0); n <= ordre ; n++){
+		for(size_t m(0); m <= n ; m++){
+			double_somme += (n+1)*pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
+		}}
+		
+	dUdr = -G*masse_terre/pow(r,2)*double_somme;
+	
+	return dUdr;
+}
 
+double dUdphi_geo(valarray<double> const& equatorial) const{
+	
+	double dUdphi;
+	
+	double r = equatorial[0];
+	double phi = equatorial[1];
+	double lambda = equatorial[2];
+	double double_somme(0);
+	
+	for(size_t n(0); n <= ordre ; n++){
+		for(size_t m(0); m <= n ; m++){
+			double dP_norm;
+			dP_norm = (P_norm(n,m,sin(phi + dphi)) - P_norm(n,m,sin(phi)))/dphi;
+			double_somme += pow(rayon_terre/r,n)*dP_norm*cos(phi)*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
+		}}
+	dUdphi = G*masse_terre/r*double_somme;
+	return dUdphi;
+}
+
+double dUdlambda_geo(valarray<double> const& equatorial)const{
+	
+	double dUdlambda;
+	
+	double r = equatorial[0];
+	double phi = equatorial[1];
+	double lambda = equatorial[2];
+	double double_somme(0);
+	
+	for(size_t n(0); n <= ordre ; n++){
+		for(size_t m(0); m <= n ; m++){
+			double_somme += pow(rayon_terre/r,n)*m*P_norm(n,m,sin(phi))*(S_nm[n][m]*cos(m*lambda)-C_nm[n][m]*sin(m*lambda));
+		}}
+		
+	dUdlambda = G*masse_terre/r*double_somme;
+	return dUdlambda;
+}
 valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_) const{
 
 	valarray<double> x_vect = x_[slice(0,3,1)];
@@ -379,15 +434,15 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	vec_dr[1] = 0;
 	vec_dr[2] = 0;
 
-	valarray<double> dphi(3);
-	dphi[0] = 0;
-	dphi[1] = 2*pi/6.e12;
-	dphi[2] = 0;
+	valarray<double> vec_dphi(3);
+	vec_dphi[0] = 0;
+	vec_dphi[1] = dphi;
+	vec_dphi[2] = 0;
 
 	valarray<double> dlambda(3);
 	dlambda[0] = 0;
 	dlambda[1] = 0;
-	dlambda[2] = 2*pi/6.e12;
+	dlambda[2] = dphi;
 
 	double U = Geopot(eq_vect);
 
@@ -422,9 +477,15 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	//cout << eq_vect[0] << ' ' << eq_vect[1] << ' '  << eq_vect[2] << endl;
 	//cout << vec_dr[0] << ' ' << vec_dr[1] << ' ' << vec_dr[2] << endl;
 	
+	/*
 	double dUdr = (Geopot(eq_vect + vec_dr)-U)/dr;
-	double dUdphi = (Geopot(eq_vect + dphi)-U)/dphi[1];
+	double dUdphi = (Geopot(eq_vect + vec_dphi)-U)/vec_dphi[1];
 	double dUdlambda = (Geopot(eq_vect + dlambda)-U)/dlambda[2];
+	*/
+	
+	double dUdr = dUdr_geo(eq_vect);
+	double dUdphi = dUdphi_geo(eq_vect);
+	double dUdlambda = dUdlambda_geo(eq_vect);
 	
 	//cout << dUdr << ' ' << dUdphi << ' ' << dUdlambda << ' ' << drdx << ' ' << drdy << ' ' << drdz << ' ' << dphidx << ' ' << dphidy << ' ' << dphidz << ' ' << dlambdadx << ' ' <<dlambdady << ' ' << dlambdadz <<endl;
 
@@ -652,11 +713,12 @@ public:
     second = configFile.get<double>("second"); // Lire l'heure de la détection
     sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
     tol = configFile.get<double>("tol");
-    //ordre = configFile.get<unsigned int>("ordre");
+    ordre = configFile.get<unsigned int>("ordre");
 
     dt = tfin / nsteps;          // calculer le time step
     
-    dr = configFile.get<double>("dr");
+    dr = configFile.get<double>("dr"); // Quantité infinitésimal dr
+    dphi = configFile.get<double>("dphi"); // Quantité infinitésimal dphi
 
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
@@ -751,7 +813,7 @@ public:
 
       printOut(false,matrix); // ecrire pas de temps actuel
 
-      //cout << t << "\r";
+      cout << t << "\r";
     }
     if (tfin > t){
       dt = tfin-t;
