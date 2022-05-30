@@ -1,8 +1,8 @@
 
 % Parametres physiques :
 
-tfin   = 3.96e4% temps total maximal de simulation [s] 3.155814954e7 5579.2552
-day=20
+tfin   = 86400% temps total maximal de simulation [s] 3.155814954e7 5579.2552
+day=27
 month=5
 hour=12
 year = 2022
@@ -13,24 +13,24 @@ mass1   = 457735.00  % mass du corps 2[kg] Satellite
 
 Solar_area = 2500 % aire face au soleil en m^2
 
-Drag_area = 1393.57 % surface de frottement	
+Drag_area = 1628.67 % surface de frottement	
 
-ordre = 10 % nombre de termes -1 considérés pour calculer le géopotentiel
+ordre = 2 % nombre de termes -1 considérés pour calculer le géopotentiel
 
 dr = 4.364e-2 % Quantité infinitésimal dr utilisée pour les dérivées 
 dphi = 1.e-3 % Quantité infinitésimal dphi utilisée pour les dérivées
 
-C_d = 3.60 % Coefficient de trainé (sans dimension) Approx: 2
+C_d = 3. % Coefficient de trainé (sans dimension) Approx: 2
 
-x01     = 4663.710505154480e3   % position initiale en x [m] corps 1 6.795309e6
-y01     = -1279.544272805880e3        % position initiale en y [m] corps 1
-z01     = -4782.658988575170e3        % position initiale en z [m] corps 1
-vx01    = -0.78363417500147e3      % vitesse initiale en x [m/s] corps 1
-vy01    =  7.12402498146661e3      % vitesse initiale en y [m/s] corps 1 
-vz01    = -2.67689634442018e3      % vitesse initiale en z [m/s] corps 1
+x01     = -3830.813646056520e3   % position initiale en x [m] corps 1 6.795309e6
+y01     = 1962.729228589280e3        % position initiale en y [m] corps 1
+z01     = 5249.322986490550e3        % position initiale en z [m] corps 1
+vx01    = -2.27319883402596e3      % vitesse initiale en x [m/s] corps 1
+vy01    = -7.24436091779215e3      % vitesse initiale en y [m/s] corps 1 
+vz01    = 1.04269798962047e3      % vitesse initiale en z [m/s] corps 1
 
 % Parametres numeriques :
-nsteps   = 39600 % nombre de pas de temps maximal (dt=tfin/nsteps) 557925
+nsteps   = 360 % nombre de pas de temps maximal (dt=tfin/nsteps) 557925
 schema   = RK4  % Schema numerique RK4,SV
 tol     = 0       % tolerance methode Adaptatif
 output   = output.out % nome/adresse du fichier d'output

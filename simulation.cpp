@@ -189,8 +189,9 @@ private:
   const double masse_soleil =1.988435e30 ;
   const double masse_lune = 7.3459e22;
   const double masse_terre = 5.97e24;
-  const double rayon_terre = 6371009;
+  const double rayon_terre = 6378.13630e3;
   const double celeritas =  299792458;
+  const double Gm_t = 398600.4415e9;
 
   // definition des variables
   double tfin=0.e0;      // Temps final
@@ -385,7 +386,7 @@ double dUdr_geo(valarray<double> const& equatorial) const{
 			double_somme += (n+1)*pow(rayon_terre/r,n)*P_norm(n,m,sin(phi))*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
 		}}
 		
-	dUdr = -G*masse_terre/pow(r,2)*double_somme;
+	dUdr = -Gm_t/pow(r,2)*double_somme;
 	
 	return dUdr;
 }
@@ -405,7 +406,7 @@ double dUdphi_geo(valarray<double> const& equatorial) const{
 			dP_norm = (P_norm(n,m,sin(phi + dphi)) - P_norm(n,m,sin(phi)))/dphi;
 			double_somme += pow(rayon_terre/r,n)*dP_norm*cos(phi)*(C_nm[n][m]*cos(m*lambda)+S_nm[n][m]*sin(m*lambda));
 		}}
-	dUdphi = G*masse_terre/r*double_somme;
+	dUdphi = Gm_t/r*double_somme;
 	return dUdphi;
 }
 
@@ -423,7 +424,7 @@ double dUdlambda_geo(valarray<double> const& equatorial)const{
 			double_somme += pow(rayon_terre/r,n)*m*P_norm(n,m,sin(phi))*(S_nm[n][m]*cos(m*lambda)-C_nm[n][m]*sin(m*lambda));
 		}}
 		
-	dUdlambda = G*masse_terre/r*double_somme;
+	dUdlambda = Gm_t/r*double_somme;
 	return dUdlambda;
 }
 valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_) const{
@@ -491,6 +492,104 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	double dUdr = dUdr_geo(eq_vect);
 	double dUdphi = dUdphi_geo(eq_vect);
 	double dUdlambda = dUdlambda_geo(eq_vect);
+
+	//cout << dUdr << ' ' << dUdphi << ' ' << dUdlambda << ' ' << drdx << ' ' << drdy << ' ' << drdz << ' ' << dphidx << ' ' << dphidy << ' ' << dphidz << ' ' << dlambdadx << ' ' <<dlambdady << ' ' << dlambdadz <<endl;
+
+	double dUdx = dUdr*drdx + dUdphi*dphidx + dUdlambda*dlambdadx;
+	double dUdy = dUdr*drdy + dUdphi*dphidy	+ dUdlambda*dlambdady;
+	double dUdz = dUdr*drdz + dUdphi*dphidz + dUdlambda*dlambdadz;
+
+	valarray<double> r_p_p = valarray<double> (0.e0,3);
+	r_p_p[0] = dUdx;
+	r_p_p[1] = dUdy;
+	r_p_p[2] = dUdz;
+
+	valarray<double> f(3);
+	f = ForceGravitationTerre(x_,x1_);
+
+	//Pour débuguer
+
+	//cout << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
+	//cout << r_p_p[0] << ' ' << r_p_p[1] << ' ' << r_p_p[2] << endl;
+
+	return r_p_p;
+}
+
+valarray<double> Acceleration_Geopotentiel2(valarray<double> const& x_, valarray<double> const& x1_)const{
+	
+	// Juste pour ordre 2 en calculant explicitement les dérivées des polynômes de Legendre
+	
+	valarray<double> x_vect = x_[slice(0,3,1)];
+	valarray<double> eq_vect(3);
+	eq_vect = cartesiantoequatorial(x_vect[0],x_vect[1],x_vect[2]);
+	
+	
+
+	// Quantités infinitésimales
+
+	valarray<double> vec_dr(3); // Vecteur infinitésimal
+	vec_dr[0] = dr;
+	vec_dr[1] = 0;
+	vec_dr[2] = 0;
+
+	valarray<double> vec_dphi(3);
+	vec_dphi[0] = 0;
+	vec_dphi[1] = dphi;
+	vec_dphi[2] = 0;
+
+	valarray<double> dlambda(3);
+	dlambda[0] = 0;
+	dlambda[1] = 0;
+	dlambda[2] = dphi;
+
+	double U = Geopot(eq_vect);
+
+	// Définition de grandeurs pratiques
+
+	double x = x_vect[0];
+	double y = x_vect[1];
+	double z = x_vect[2];
+	double r = eq_vect[0];
+	double phi = eq_vect[1];
+	double lambda = eq_vect[2];
+
+	// Dérivées de r
+
+	double drdx = x/r;
+	double drdy = y/r;
+	double drdz = z/r;
+
+	// Dérivées de phi
+
+	double dphidx = -x/(pow(r,3)*sqrt(1-pow(z/r,2)));
+	double dphidy = -y/(pow(r,3)*sqrt(1-pow(z/r,2)));
+	double dphidz = 2*z/r/sqrt(1-pow(z/r,2))*(1/r - pow(z,2)/pow(r,3));
+
+	// Dérivées de lambda
+
+	double dlambdadx = -y/(pow(x,2) + pow(y,2));
+	double dlambdady = x/(pow(x,2) + pow(y,2));
+	double dlambdadz = 0;
+
+	// Calcul du gradient
+
+	/*
+	double dUdr = (Geopot(eq_vect + vec_dr)-U)/dr;
+	double dUdphi = (Geopot(eq_vect + vec_dphi)-U)/vec_dphi[1];
+	double dUdlambda = (Geopot(eq_vect + dlambda)-U)/dlambda[2];
+	*/
+	
+	double dUdr = dUdr_geo(eq_vect);
+	double dUdlambda = dUdlambda_geo(eq_vect);
+	
+	// Calcul de dUdphi "à la main"
+	double dUdphi;
+	double sum_n2(0);
+	double terme_20_phi = sqrt(5)*3*sin(phi)*cos(phi)*(-484.165368);
+	double terme_21_phi = sqrt(5/3)*3*cos(2*phi)*(-0.000187*cos(lambda) + 0.001195*sin(lambda));
+	double terme_22_phi = sqrt(5/24)*(-6*sin(phi))*cos(phi)*(2.439261*cos(2*lambda) + -1.400266*sin(2*lambda));
+	sum_n2 = pow(rayon_terre/r,2)*(terme_20_phi + terme_21_phi + terme_22_phi)*1.e-6;
+	dUdphi = G*masse_terre/r*sum_n2;
 
 	//cout << dUdr << ' ' << dUdphi << ' ' << dUdlambda << ' ' << drdx << ' ' << drdy << ' ' << drdz << ' ' << dphidx << ' ' << dphidy << ' ' << dphidz << ' ' << dlambdadx << ' ' <<dlambdady << ' ' << dlambdadz <<endl;
 
@@ -664,13 +763,13 @@ valarray<double> acceleration(valarray<double> const& x_,valarray<double> const&
   accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
 */
 
-//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
-accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass +ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
+//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
-accelere = ForceGravitationTerre(x_,x1_)+ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
-cout <<"Terre2 : " << Acceleration_Geopotentiel(x_,x1_)[0] <<"Terre : " << ForceGravitationTerre(x_,x1_)[0] <<" Lune : " << ForceGravitationLune(x_,x1_)[0]<< " Soleil : " << ForceGravitationSoleil(x_,x1_)[0]<< " Frottement " << ForceFrottement(x_,x1_)[0]/mass << " Inertie : " <<ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0] << " Radiation : " <<ForceSolaire(x_,x1_)[0]/mass << endl;
+//accelere = ForceGravitationTerre(x_,x1_)+ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+//cout <<"Terre2 : " << Acceleration_Geopotentiel(x_,x1_)[0] <<"Terre : " << ForceGravitationTerre(x_,x1_)[0] <<" Lune : " << ForceGravitationLune(x_,x1_)[0]<< " Soleil : " << ForceGravitationSoleil(x_,x1_)[0]<< " Frottement " << ForceFrottement(x_,x1_)[0]/mass << " Inertie : " <<ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0] << " Radiation : " <<ForceSolaire(x_,x1_)[0]/mass << endl;
   return accelere;
 }
 
