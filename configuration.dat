@@ -15,10 +15,10 @@ Solar_area = 2500 % aire face au soleil en m^2
 
 Drag_area = 1432.80 % surface de frottement
 
-ordre = 0 % nombre de termes -1 considérés pour calculer le géopotentiel
-dr = 0.001 % Quantité infinitésimal dr utilisée pour les dérivées 4.364e-2
+ordre = 2 % nombre de termes -1 considérés pour calculer le géopotentiel
 
-C_d = 3.60 % Coefficient de trainé (sans dimension) Approx: 2
+dr = 4.364e-2 % Quantité infinitésimal dr utilisée pour les dérivées
+dphi = 1.e-3 % Quantité infinitésimal dphi utilisée pour les dérivées
 
 x01     = -4251788.659812690   % position initiale en x [m] corps 1 6.795309e6
 y01     =  1706926.749274460     % position initiale en y [m] corps 1
