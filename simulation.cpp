@@ -1,6 +1,8 @@
+#define __STDCPP_MATH_SPEC_FUNCS__1
+#define __STDCPP_WANT_MATH_SPEC_FUNCS__
 #include <iostream>       // basic input output streams
 #include <fstream>        // input output file stream class
-#define __STDCPP_WANT_MATH_SPEC_FUNCS__ 1
+
 #include <cmath>          // librerie mathematique de base
 #include <iomanip>        // input output manipulators
 #include <valarray>       // valarray functions
@@ -322,7 +324,7 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
 	return force;
 }
 
-double P_norm(size_t const& n, size_t const& m, long double const& x)const{
+double P_norm(unsigned int const& n, unsigned int const& m, long double const& x)const{
 
 	// Polynome de Legendre associé normalisé
 
@@ -572,7 +574,7 @@ valarray<double> ForceCentrifuge(valarray<double> const& x_,valarray<double> con
 valarray<double> ForceEuler(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const {
 
   valarray<double> vect_der = valarray<double>(0.e0,3);
-  return vect_der;
+
   valarray<double> position = x_[slice(0,3,1)];
 
   // A optimiser
@@ -603,7 +605,7 @@ accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+Forc
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
 accelere = ForceGravitationTerre(x_,x1_)+ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
-cout <<"Terre2 : " << Acceleration_Geopotentiel(x_,x1_)[0] <<"Terre : " << ForceGravitationTerre(x_,x1_)[0] <<" Lune : " << ForceGravitationLune(x_,x1_)[0]<< " Soleil : " << ForceGravitationSoleil(x_,x1_)[0]<< " Frottement " << ForceFrottement(x_,x1_)[0]/mass << " Inertie : " <<ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0] << " Radiation : " <<ForceSolaire(x_,x1_)[0]/mass << endl;
+cout << setprecision(30)<<"Terre2 : " << Acceleration_Geopotentiel(x_,x1_)[0] <<" Terre : " << ForceGravitationTerre(x_,x1_)[0] <<" Lune : " << ForceGravitationLune(x_,x1_)[0]<< " Soleil : " << ForceGravitationSoleil(x_,x1_)[0]<< " Frottement " << ForceFrottement(x_,x1_)[0]/mass << " Inertie : " <<ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0] << " Radiation : " <<ForceSolaire(x_,x1_)[0]/mass << endl;
   return accelere;
 }
 

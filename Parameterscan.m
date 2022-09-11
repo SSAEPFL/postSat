@@ -124,3 +124,22 @@ grid on
 % 
 % 
 % 
+d_NASA = load('NASA.txt');
+ for i = 1:nsimul % Parcours des resultats de toutes les simulations
+     data = load(output{i}); % Chargement du fichier de sortie de la i-ieme simulation
+    
+       x_th = d_NASA(25,2)*1000; % TODO: Entrer la vraie solution analytique a tfin
+       y_th = d_NASA(25,3)*1000;%     
+       z_th = d_NASA(25,4)*1000; % TODO: Entrer la vraie solution analytique a tfin
+      error(i) = sqrt((data(end,2)-x_th).^2+(data(end,3)-y_th).^2+(data(end,4)-z_th).^2); % erreur sur la position finale
+%      xfinal(i) = data(end,2);
+%      yfinal(i) = data(end,3);
+%      zfinal(i) = data(end,4);
+    
+ end
+figure 
+loglog(nsteps, error, 'b.-', 'Linewidth', 1.5)
+% 
+  hold on 
+   xlabel('Number of steps','Fontsize', 15)
+   ylabel('error of the last position [m]','Fontsize', 15)

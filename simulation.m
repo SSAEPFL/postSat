@@ -184,6 +184,7 @@ mydata = load('output.out');
 figure 
  plot3(data_Nasa(1:361,2)*1000,data_Nasa(1:361,3)*1000,data_Nasa(1:361,4)*1000)
 hold on
+
 plot3(mydata(:,2),mydata(:,3),mydata(:,4),'r--')
 %erreur
  erreur_1tour = sqrt((data_Nasa(25,2)*1000-mydata(25,2))^2+(data_Nasa(25,3)*1000-mydata(25,3))^2+(data_Nasa(25,4)*1000-mydata(25,4))^2)
@@ -192,6 +193,13 @@ error = zeros(1,361);
 for i = 1:361
     error(i) =sqrt((data_Nasa(i,2)*1000-mydata(i,2))^2+(data_Nasa(i,3)*1000-mydata(i,3))^2+(data_Nasa(i,4)*1000-mydata(i,4))^2);
 end
-
+for i = 1:361
+altitude_Nasa(i) = sqrt((data_Nasa(i,2)*1000)^2+(data_Nasa(i,3)*1000)^2+(data_Nasa(i,4)*1000)^2);
+altitude(i) = sqrt((mydata(i,2))^2+(mydata(i,3))^2+(mydata(i,4))^2);
+end
+figure 
+plot(mydata(:,1), altitude,'r-')
+hold on 
+plot(mydata(:,1), altitude_Nasa,'k-')
 figure 
 plot(mydata(:,1), error)
