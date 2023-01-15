@@ -758,7 +758,7 @@ public:
     Lune = Ephemeris::solarSystemObjectAtDateAndTime(EarthsMoon, day, month, year, hour, minute, second); // initialisation du soleil et de la Lune
 */
 	// Création de la table de coefficients pour rho (H-P)
-	ifstream is("Harris_Priester_tab.txt");
+	ifstream is("./ForceModel/Harris_Priester_tab.txt");
 	istream_iterator<double> start(is), end;
 	vector<double> numbers(start, end); // Liste des coefficients (0 mod 3 -> altitude, 1 mod 3 -> rho_m , 2 mod 3 -> rho_M)
 	is.close();
@@ -774,7 +774,7 @@ public:
 
 	// Création des tables de coefficients pour le géopotentiel
 
-	ifstream cs("C_nm.txt");
+	ifstream cs("./ForceModel/C_nm.txt");
 	istream_iterator<double> start_c(cs), end_c;
 	vector<double> numbers_c(start_c, end_c);
 	cs.close();
@@ -788,7 +788,7 @@ public:
 
 	C_nm = tab_C;
 
-	ifstream ss("S_nm.txt");
+	ifstream ss("./ForceModel/S_nm.txt");
 	istream_iterator<double> start_s(ss), end_s;
 	vector<double> numbers_s(start_s, end_s);
 	ss.close();
@@ -891,8 +891,6 @@ public:
 
   // construire la class Engine
   EngineRungeKutta4(ConfigFile configFile): Engine(configFile) {}
-
-
 
   // TODO
   /* Cette methode integre les equations du mouvement en utilisant
