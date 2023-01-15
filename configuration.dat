@@ -1,0 +1,35 @@
+% CONFIGURATION PARAMETERS
+
+% Initial state
+year   = 2022
+month  = 12
+day    = 14
+hour   = 12
+minute = 0
+second = 0
+
+x01 = 2524798.5463699102 % position initiale en x [m]
+y01 = 3547480.34609853 % position initiale en y [m]
+z01 = -5223286.74346908 % position initiale en z [m]
+vx01= -6881.5016227344195 % position initiale en x [m]
+vy01= 3113.8505039090696 % position initiale en y [m]
+vz01= -1215.96824167983 % position initiale en z [m]
+
+% Physical Parametres:
+mass1   = 472355.0   % mass of obeject
+Drag_area = 1457.2 % surface of drag in m^2
+C_d = 2.0 % drag coeffiencient
+Solar_area = 0.0 % area face to sun in m^2
+ordre = 2 % geopotential order
+
+% Numerical integrator parameters: 
+tfin   = 259200  % simulation time in [s]
+nsteps   = 25920.0 % nombre de pas de temps (dt=tfin/nsteps)
+schema   = RK4  % Schema numerique RK4,SV
+
+dr = 4.364e-2 % Quantité infinitésimal dr utilisée pour les dérivées
+dphi = 1.e-10 % Quantité infinitésimal dphi utilisée pour les dérivées 1.e-3
+
+tol     = 0       % tolerance methode Adaptatif
+output   = output.out % nome/adresse du fichier d'output
+sampling = 1    % nombre de pas de temps entre deux ecritures, no sampling = -1
