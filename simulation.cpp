@@ -330,6 +330,46 @@ valarray<double> ForceGravitationTerre(valarray<double> const& x_,valarray<doubl
 
 	return force;
 }
+	
+double assoc_legendrel(unsigned int const& n, unsigned int const& m, long double const& x)const{
+  // write the associated legendrel term (can also use modules)
+  double value = 0;
+    if (n==0){
+        if (m==0){ value=1.0;}
+    }
+    
+    else if (n==1){
+        if (m==0){ value= x;}
+        else if (m==1){ value= -sqrt(1-x*x);}
+    }
+    
+    else if (n==2){
+        if (m==0){ value= 0.5*(3*x*x-1);}
+        else if (m==1){ value= -3.0*x*sqrt(1-x*x);}
+        else if (m==2){ value= 3*(1-x*x);}
+    }
+        
+    else if (n==3){
+        if (m==0){ value= 0.5*x*(5*x*x-3);}
+        else if (m==1){ value= 1.5*(1-5*x*x)*sqrt(1-x*x);}
+        else if (m==2){ value= 15*x*(1-x*x);}
+        else if (m==3){ value= -15*pow((1-x*x),1.5);}
+    }
+        
+    else if (n==4){
+        if (m==0){ value= 1.0/8.0*(35*pow(x,4.0)-30*x*x+3);}
+        else if (m==1){ value= 2.5*x*(3-7*x*x)*sqrt(1-x*x);}
+        else if (m==2){ value= 7.5*(7*x*x-1)*(1-x*x);}
+        else if (m==3){ value= -105*x*pow((1-x*x),1.5);}
+        else if (m==4){ value= 105*(1-x*x)*(1-x*x);}
+    }
+    
+    else{
+        value= 0;
+    }
+  return value;
+}
+
 
 double P_norm(unsigned int const& n, unsigned int const& m, long double const& x)const{
 
@@ -376,7 +416,6 @@ double Geopot(valarray<double> const& equatorial) const {
 double dUdr_geo(valarray<double> const& equatorial) const{
 
 	double dUdr;
-
 	double r = equatorial[0];
 	double phi = equatorial[1];
 	double lambda = equatorial[2];
@@ -429,8 +468,9 @@ double dUdlambda_geo(valarray<double> const& equatorial)const{
 	dUdlambda = Gm_t/r*double_somme;
 	return dUdlambda;
 }
-valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<double> const& x1_) const{
+	
 
+valarray<double> ForceGeopotentiel(valarray<double> const& x_, valarray<double> const& x1_) const{
 	valarray<double> x_vect = x_[slice(0,3,1)];
 	valarray<double> eq_vect(3);
 	eq_vect = cartesiantoequatorial(x_vect[0],x_vect[1],x_vect[2]);
@@ -441,50 +481,42 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	vec_dr[0] = dr;
 	vec_dr[1] = 0;
 	vec_dr[2] = 0;
-
 	valarray<double> vec_dphi(3);
 	vec_dphi[0] = 0;
 	vec_dphi[1] = dphi;
 	vec_dphi[2] = 0;
-
 	valarray<double> dlambda(3);
 	dlambda[0] = 0;
 	dlambda[1] = 0;
 	dlambda[2] = dphi;
 
-	double U = Geopot(eq_vect);
+	// double U = Geopot(eq_vect);
 
 	// Définition de grandeurs pratiques
-
 	double x = x_vect[0];
 	double y = x_vect[1];
 	double z = x_vect[2];
 	double r = eq_vect[0];
 
 	// Dérivées de r
-
 	double drdx = x/r;
 	double drdy = y/r;
 	double drdz = z/r;
 
 	// Dérivées de phi
-
 	double dphidx = -x/(pow(r,3)*sqrt(1-pow(z/r,2)));
 	double dphidy = -y/(pow(r,3)*sqrt(1-pow(z/r,2)));
 	double dphidz = 2*z/r/sqrt(1-pow(z/r,2))*(1/r - pow(z,2)/pow(r,3));
 
 	// Dérivées de lambda
-
 	double dlambdadx = -y/(pow(x,2) + pow(y,2));
 	double dlambdady = x/(pow(x,2) + pow(y,2));
 	double dlambdadz = 0;
 
 	// Calcul du gradient
-
 	//cout << Geopot(eq_vect + vec_dr) << ' ' << U << endl;
 	//cout << eq_vect[0] << ' ' << eq_vect[1] << ' '  << eq_vect[2] << endl;
 	//cout << vec_dr[0] << ' ' << vec_dr[1] << ' ' << vec_dr[2] << endl;
-
 	/*
 	double dUdr = (Geopot(eq_vect + vec_dr)-U)/dr;
 	double dUdphi = (Geopot(eq_vect + vec_dphi)-U)/vec_dphi[1];
@@ -501,118 +533,18 @@ valarray<double> Acceleration_Geopotentiel(valarray<double> const& x_, valarray<
 	double dUdy = dUdr*drdy + dUdphi*dphidy	+ dUdlambda*dlambdady;
 	double dUdz = dUdr*drdz + dUdphi*dphidz + dUdlambda*dlambdadz;
 
-	valarray<double> r_p_p = valarray<double> (0.e0,3);
-	r_p_p[0] = dUdx;
-	r_p_p[1] = dUdy;
-	r_p_p[2] = dUdz;
+	valarray<double> force = valarray<double> (0.e0,3);
+	force[0] = dUdx;
+	force[1] = dUdy;
+	force[2] = dUdz;
 
-	valarray<double> f(3);
-	f = ForceGravitationTerre(x_,x1_);
+	// valarray<double> f(3);
+	// f = ForceGravitationTerre(x_,x1_);
+  // cout << 'Geopotential:' << endl;
+	// cout << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
+	// cout << force[0] << ' ' << force[1] << ' ' << force[2] << endl;
 
-	//Pour débuguer
-
-	//cout << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
-	//cout << r_p_p[0] << ' ' << r_p_p[1] << ' ' << r_p_p[2] << endl;
-
-	return r_p_p;
-}
-
-valarray<double> Acceleration_Geopotentiel2(valarray<double> const& x_, valarray<double> const& x1_)const{
-
-	// Juste pour ordre 2 en calculant explicitement les dérivées des polynômes de Legendre
-
-	valarray<double> x_vect = x_[slice(0,3,1)];
-	valarray<double> eq_vect(3);
-	eq_vect = cartesiantoequatorial(x_vect[0],x_vect[1],x_vect[2]);
-
-
-
-	// Quantités infinitésimales
-
-	valarray<double> vec_dr(3); // Vecteur infinitésimal
-	vec_dr[0] = dr;
-	vec_dr[1] = 0;
-	vec_dr[2] = 0;
-
-	valarray<double> vec_dphi(3);
-	vec_dphi[0] = 0;
-	vec_dphi[1] = dphi;
-	vec_dphi[2] = 0;
-
-	valarray<double> dlambda(3);
-	dlambda[0] = 0;
-	dlambda[1] = 0;
-	dlambda[2] = dphi;
-
-	double U = Geopot(eq_vect);
-
-	// Définition de grandeurs pratiques
-
-	double x = x_vect[0];
-	double y = x_vect[1];
-	double z = x_vect[2];
-	double r = eq_vect[0];
-	double phi = eq_vect[1];
-	double lambda = eq_vect[2];
-
-	// Dérivées de r
-
-	double drdx = x/r;
-	double drdy = y/r;
-	double drdz = z/r;
-
-	// Dérivées de phi
-
-	double dphidx = -x/(pow(r,3)*sqrt(1-pow(z/r,2)));
-	double dphidy = -y/(pow(r,3)*sqrt(1-pow(z/r,2)));
-	double dphidz = 2*z/r/sqrt(1-pow(z/r,2))*(1/r - pow(z,2)/pow(r,3));
-
-	// Dérivées de lambda
-
-	double dlambdadx = -y/(pow(x,2) + pow(y,2));
-	double dlambdady = x/(pow(x,2) + pow(y,2));
-	double dlambdadz = 0;
-
-	// Calcul du gradient
-
-	/*
-	double dUdr = (Geopot(eq_vect + vec_dr)-U)/dr;
-	double dUdphi = (Geopot(eq_vect + vec_dphi)-U)/vec_dphi[1];
-	double dUdlambda = (Geopot(eq_vect + dlambda)-U)/dlambda[2];
-	*/
-
-	double dUdr = dUdr_geo(eq_vect);
-	double dUdlambda = dUdlambda_geo(eq_vect);
-
-	// Calcul de dUdphi "à la main"
-	double dUdphi;
-	double sum_n2(0);
-	double terme_20_phi = sqrt(5)*3*sin(phi)*cos(phi)*(-484.165368);
-	double terme_21_phi = sqrt(5/3)*3*cos(2*phi)*(-0.000187*cos(lambda) + 0.001195*sin(lambda));
-	double terme_22_phi = sqrt(5/24)*(-6*sin(phi))*cos(phi)*(2.439261*cos(2*lambda) + -1.400266*sin(2*lambda));
-	sum_n2 = pow(rayon_terre/r,2)*(terme_20_phi + terme_21_phi + terme_22_phi)*1.e-6;
-	dUdphi = G*masse_terre/r*sum_n2;
-
-	//cout << dUdr << ' ' << dUdphi << ' ' << dUdlambda << ' ' << drdx << ' ' << drdy << ' ' << drdz << ' ' << dphidx << ' ' << dphidy << ' ' << dphidz << ' ' << dlambdadx << ' ' <<dlambdady << ' ' << dlambdadz <<endl;
-
-	double dUdx = dUdr*drdx + dUdphi*dphidx + dUdlambda*dlambdadx;
-	double dUdy = dUdr*drdy + dUdphi*dphidy	+ dUdlambda*dlambdady;
-	double dUdz = dUdr*drdz + dUdphi*dphidz + dUdlambda*dlambdadz;
-
-	valarray<double> r_p_p = valarray<double> (0.e0,3);
-	r_p_p[0] = dUdx;
-	r_p_p[1] = dUdy;
-	r_p_p[2] = dUdz;
-
-	valarray<double> f(3);
-	f = ForceGravitationTerre(x_,x1_);
-
-	//Pour débuguer
-
-	//cout << f[0] << ' ' << f[1] << ' ' << f[2] << endl;
-	//cout << r_p_p[0] << ' ' << r_p_p[1] << ' ' << r_p_p[2] << endl;
-
-	return r_p_p;
+	return force;
 }
 
 valarray<double> ForceFrottement(valarray<double> const& x_,valarray<double> const& x1_) const {
@@ -760,13 +692,9 @@ valarray<double> ForceEuler(valarray<double> const& x_,valarray<double> const& x
 
 valarray<double> acceleration(valarray<double> const& x_,valarray<double> const& x1_,double dt_, double second, int minute, int heure, int jour, int mois, int annee) const{
   valarray<double> accelere(0.e1,3);
-  /*accelere[0] = ForceGravitationSoleil(x_,x1_)[0]+ForceGravitationTerre(x_,x1_)[0]+ForceGravitationLune(x_,x1_)[0]+ForceFrottement(x_,x1_)[0]/mass+ForceSolaire(x_,x1_)[0]/mass ;
-  accelere[1] = ForceGravitationSoleil(x_,x1_)[1]+ForceGravitationTerre(x_,x1_)[1]+ForceGravitationLune(x_,x1_)[1]+ForceFrottement(x_,x1_)[1]/mass+ForceSolaire(x_,x1_)[1]/mass;
-  accelere[2] = ForceGravitationSoleil(x_,x1_)[2]+ForceGravitationTerre(x_,x1_)[2]+ForceGravitationLune(x_,x1_)[2]+ForceFrottement(x_,x1_)[2]/mass+ForceSolaire(x_,x1_)[2]/mass;
-*/
 
-//accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
-accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+//accelere = ForceGravitationTerre(x_,x1_)+ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
+accelere = ForceGeopotentiel(x_,x1_)+ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceFrottement(x_,x1_)/mass+ForceSolaire(x_,x1_)/mass;
 //accelere = ForceGravitationSoleil(x_,x1_)+ForceGravitationTerre(x_,x1_)+ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass;
 //accelere = ForceGravitationTerre(x_,x1_) + ForceFrottement(x_,x1_)/mass+ ForceGravitationSoleil(x_,x1_)+ForceGravitationLune(x_,x1_)+ForceSolaire(x_,x1_)/mass+ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee);
@@ -774,7 +702,6 @@ accelere = ForceGravitationSoleil(x_,x1_)+Acceleration_Geopotentiel(x_,x1_)+Forc
 //cout <<"Terre2 : " << Acceleration_Geopotentiel(x_,x1_)[0] <<"Terre : " << ForceGravitationTerre(x_,x1_)[0] <<" Lune : " << ForceGravitationLune(x_,x1_)[0]<< " Soleil : " << ForceGravitationSoleil(x_,x1_)[0]<< " Frottement " << ForceFrottement(x_,x1_)[0]/mass << " Inertie : " <<ForceCoriolis(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceCentrifuge(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0]+ForceEuler(x_,x1_,dt_,second,minute, heure,jour, mois, annee)[0] << " Radiation : " <<ForceSolaire(x_,x1_)[0]/mass << endl;
   return accelere;
 }
-
 
 
 public:
@@ -798,34 +725,33 @@ public:
   {
     // variable locale
 
-    // Stockage des parametres de simulation dans les attributs de la classe
-    tfin     = configFile.get<double>("tfin");		 // lire la temps totale de simulation
-    nsteps   = configFile.get<unsigned int>("nsteps");   // lire la nombre de pas de temps
-    mass     = configFile.get<double>("mass1");		 // lire la mass du corps 1
+   // Stockage des parametres de simulation dans les attributs de la classe
+    year = configFile.get<double>("year"); // Lire l'heure de la détection
+    month = configFile.get<double>("month"); // Lire l'heure de la détection
+    day = configFile.get<double>("day"); // Lire l'heure de la détection
+    hour = configFile.get<double>("hour"); // Lire l'heure de la détection
+    minute = configFile.get<double>("minute"); // Lire l'heure de la détection
+    second = configFile.get<double>("second"); // Lire l'heure de la détection
     x0[0]    = configFile.get<double>("x01");		 // lire composante x position initiale Satellite
     x0[1]    = configFile.get<double>("y01");		 // lire composante y position initiale Satellite
     x0[2]    = configFile.get<double>("z01");		 // lire composante z position initiale Satellite
     x0[3]    = configFile.get<double>("vx01");		 // lire composante x vitesse initiale Satellite
     x0[4]    = configFile.get<double>("vy01");		 // lire composante y vitesse initiale Satellite
     x0[5]    = configFile.get<double>("vz01");		 // lire composante z vitesse initiale Satellite
-    //Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
-   // Drag_area = configFile.get<double>("Drag_area"); // lire la surface de frottement
 
+    mass = configFile.get<double>("mass1");		 // lire la mass de la satellite
     C_d = configFile.get<double>("C_d");             // lire le drag coefficient
-    day = configFile.get<double>("day"); // Lire l'heure de la détection
-    month = configFile.get<double>("month"); // Lire l'heure de la détection
-    year = configFile.get<double>("year"); // Lire l'heure de la détection
-    hour = configFile.get<double>("hour"); // Lire l'heure de la détection
-    minute = configFile.get<double>("minute"); // Lire l'heure de la détection
-    second = configFile.get<double>("second"); // Lire l'heure de la détection
-    sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
-    tol = configFile.get<double>("tol");
-    ordre = configFile.get<unsigned int>("ordre");
+    Drag_area =configFile.get<double>("Drag_area");    // lire le drag surface
+    Solar_area   = configFile.get<double>("Solar_area");		 // lire composante de l'aire
+    ordre = configFile.get<unsigned int>("ordre"); // lire l'order de geopotential
 
+    tfin     = configFile.get<double>("tfin");		 // lire la temps totale de simulation
+    nsteps   = configFile.get<unsigned int>("nsteps");   // lire la nombre de pas de temps
     dt = tfin / nsteps;          // calculer le time step
-
     dr = configFile.get<double>("dr"); // Quantité infinitésimal dr
     dphi = configFile.get<double>("dphi"); // Quantité infinitésimal dphi
+    sampling = configFile.get<unsigned int>("sampling"); // lire le parametre de sampling
+    tol = configFile.get<double>("tol");
 
 
     /*Soleil= Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, second);
