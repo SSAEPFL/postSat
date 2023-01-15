@@ -20,7 +20,7 @@ mass1   = 472355.0   % mass of obeject
 Drag_area = 1457.2 % surface of drag in m^2
 C_d = 2.0 % drag coeffiencient
 Solar_area = 0.0 % area face to sun in m^2
-ordre = 2 % geopotential order
+ordre = 0 % geopotential order
 
 % Numerical integrator parameters: 
 tfin   = 259200  % simulation time in [s]
